@@ -1,0 +1,8 @@
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-shell
+spec:
+  package: xpkg.upbound.io/upbound/function-shell:v0.0.3
+  packagePullPolicy: Always
