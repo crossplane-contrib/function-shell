@@ -1,0 +1,39 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: shell-example
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XR
+  mode: Pipeline
+  pipeline:
+    - step: shell
+      functionRef:
+        name: function-shell
+      input:
+        apiVersion: shell.fn.crossplane.io/v1beta1
+        kind: Parameters
+        shellScriptsConfigMapsRef:
+          - scriptnames:
+              - py.py
+              - bash.sh
+            name: function-shell-script
+            namespace: upbound-system
+        shellEnvVarsSecretRef:
+          name: datadog-secret
+          namespace: upbound-system
+          key: credentials
+        shellEnvVars:
+          - key: DATADOG_API_URL
+            value: "https://api.datadoghq.com/api/v1/dashboard"
+        shellCommand: |
+          curl -X GET "${DATADOG_API_URL}" \
+            -H "Accept: application/json" \
+            -H "DD-API-KEY: ${DATADOG_API_KEY}" \
+            -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
+             jq '.dashboards[] .id';\
+             ls -l ./py.py;\
+             python3 ./py.py
+        stdoutField: status.atFunction.shell.stdout
+        stderrField: status.atFunction.shell.stderr

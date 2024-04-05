@@ -1,0 +1,155 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"strings"
+
+	"github.com/crossplane-contrib/function-shell/input/v1beta1"
+	"github.com/crossplane/crossplane-runtime/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
+	"github.com/crossplane/function-sdk-go/request"
+	"github.com/crossplane/function-sdk-go/response"
+	"github.com/keegancsmith/shell"
+)
+
+// Function returns whatever response you ask it to.
+type Function struct {
+	fnv1beta1.UnimplementedFunctionRunnerServiceServer
+
+	log logging.Logger
+}
+
+// RunFunction runs the Function.
+func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequest) (*fnv1beta1.RunFunctionResponse, error) {
+	f.log.Info("Running function", "tag", req.GetMeta().GetTag())
+
+	rsp := response.To(req, response.DefaultTTL)
+
+	in := &v1beta1.Parameters{}
+	if err := request.GetInput(req, in); err != nil {
+		response.Fatal(rsp, errors.Wrapf(err, "cannot get Function from input"))
+		return rsp, nil
+	}
+
+	oxr, err := request.GetObservedCompositeResource(req)
+	if err != nil {
+		response.Fatal(rsp, errors.Wrapf(err, "cannot get observed composite resource from %T", req))
+		return rsp, nil
+	}
+
+	// Our input is an opaque object nested in a Composition. Let's validate it
+	if err := ValidateParameters(in, oxr); err != nil {
+		response.Fatal(rsp, errors.Wrap(err, "invalid Function input"))
+		return rsp, nil
+	}
+
+	log := f.log.WithValues(
+		"oxr-version", oxr.Resource.GetAPIVersion(),
+		"oxr-kind", oxr.Resource.GetKind(),
+		"oxr-name", oxr.Resource.GetName(),
+	)
+
+	dxr, err := request.GetDesiredCompositeResource(req)
+	if err != nil {
+		response.Fatal(rsp, errors.Wrap(err, "cannot get desired composite resource"))
+		return rsp, nil
+	}
+
+	dxr.Resource.SetAPIVersion(oxr.Resource.GetAPIVersion())
+	dxr.Resource.SetKind(oxr.Resource.GetKind())
+
+	stdoutField := in.StdoutField
+	if len(in.StdoutField) == 0 {
+		stdoutField = "status.atFunction.shell.stdout"
+	}
+	stderrField := in.StderrField
+	if len(in.StderrField) == 0 {
+		stderrField = "status.atFunction.shell.stderr"
+	}
+
+	var shellScripts map[string][]string
+	if in.ShellScriptsConfigMapsRef != nil {
+		shellScripts, err = loadShellScripts(log, in.ShellScriptsConfigMapsRef)
+		if err != nil {
+			response.Fatal(rsp, errors.Wrapf(err, "cannot process shell script ConfigMaps"))
+			return rsp, nil
+		}
+	}
+
+	copyShellScripts := ""
+	if len(shellScripts) > 0 {
+		for shellScriptName, shellScript := range shellScripts {
+			copyShellScripts = "rm -f ./scripts/" + shellScriptName + ";"
+			for _, line := range shellScript {
+				escapedLine := strings.ReplaceAll(line, "'", "\"'\"")
+				copyShellScripts = copyShellScripts + "echo '" + escapedLine + "'>> ./scripts/" + shellScriptName + ";"
+			}
+			copyShellScripts = copyShellScripts + "/bin/chmod +x ./scripts/" + shellScriptName + ";"
+		}
+	}
+
+	shellCmd := ""
+	if len(in.ShellCommand) == 0 && len(in.ShellCommandField) == 0 {
+		log.Info("no shell command in in.ShellCommand nor in.ShellCommandField")
+		return rsp, nil
+	}
+
+	if len(in.ShellCommand) > 0 {
+		shellCmd = in.ShellCommand
+	}
+
+	// Prefer shell cmd from field over direct function input
+	if len(in.ShellCommandField) > 0 {
+		shellCmd = in.ShellCommandField
+	}
+
+	var shellEnvVars = make(map[string]string)
+	for _, envVar := range in.ShellEnvVars {
+		shellEnvVars[envVar.Key] = envVar.Value
+	}
+
+	if in.ShellEnvVarsSecretRef != (v1beta1.ShellEnvVarsSecretRef{}) {
+		shellEnvVars, err = addShellEnvVarsFromSecret(in.ShellEnvVarsSecretRef, shellEnvVars)
+		if err != nil {
+			response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of secret %s in namespace %s", in.ShellEnvVarsSecretRef.Name, in.ShellEnvVarsSecretRef.Namespace))
+			return rsp, nil
+		}
+	}
+
+	var exportCmds string
+	//exportCmds = "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
+	for k, v := range shellEnvVars {
+		exportCmds = exportCmds + "export " + k + "=\"" + v + "\";"
+	}
+
+	log.Info(shellCmd)
+
+	var stdout, stderr bytes.Buffer
+	cmd := shell.Commandf(exportCmds + copyShellScripts + shellCmd)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	if err != nil {
+		response.Fatal(rsp, errors.Wrapf(err, "shellCmd %s for %s failed", shellCmd, oxr.Resource.GetKind()))
+		return rsp, nil
+	}
+	out := strings.TrimSpace(stdout.String())
+	err = dxr.Resource.SetValue(stdoutField, out)
+	if err != nil {
+		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", stdoutField, out, oxr.Resource.GetKind()))
+		return rsp, nil
+	}
+	err = dxr.Resource.SetValue(stderrField, strings.TrimSpace(stderr.String()))
+	if err != nil {
+		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", stderrField, out, oxr.Resource.GetKind()))
+		return rsp, nil
+	}
+	if err := response.SetDesiredCompositeResource(rsp, dxr); err != nil {
+		response.Fatal(rsp, errors.Wrapf(err, "cannot set desired composite resources from %T", req))
+		return rsp, nil
+	}
+
+	return rsp, nil
+}

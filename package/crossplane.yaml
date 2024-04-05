@@ -1,0 +1,16 @@
+---
+apiVersion: meta.pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-shell
+  annotations:
+    meta.crossplane.io/maintainer: Markus Schweig <humoflife @ github>
+    meta.crossplane.io/source: xpkg.upbound.io/crossplane-contrib/function-shell
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: |
+      A function for running shell commands.
+    meta.crossplane.io/readme: |
+      A function for running shell commands.
+spec:
+  crossplane:
+    version: ">=v1.14.0-up.1"
