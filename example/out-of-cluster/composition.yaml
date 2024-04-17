@@ -12,14 +12,8 @@ spec:
       functionRef:
         name: function-shell
       input:
-        apiVersion: shell.fn.crossplane.io/v1beta1
+        apiVersion: shell.fn.crossplane.io/v1alpha1
         kind: Parameters
-        shellScriptsConfigMapsRef:
-          - scriptNames:
-              - py.py
-              - bash.sh
-            name: function-shell-script
-            namespace: upbound-system
         shellEnvVarsSecretRef:
           name: datadog-secret
           namespace: upbound-system
@@ -32,8 +26,6 @@ spec:
             -H "Accept: application/json" \
             -H "DD-API-KEY: ${DATADOG_API_KEY}" \
             -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
-             jq '.dashboards[] .id';\
-             ls -l ./py.py;\
-             python3 ./py.py
+             jq '.dashboards[] .id';
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr

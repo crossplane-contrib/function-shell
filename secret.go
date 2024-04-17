@@ -7,7 +7,7 @@ import (
 	"maps"
 	"os"
 
-	"github.com/crossplane-contrib/function-shell/input/v1beta1"
+	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,7 +15,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-func addShellEnvVarsFromSecret(secretRef v1beta1.ShellEnvVarsSecretRef, shellEnvVars map[string]string) (map[string]string, error) {
+func addShellEnvVarsFromSecret(secretRef v1alpha1.ShellEnvVarsSecretRef, shellEnvVars map[string]string) (map[string]string, error) {
 	var clientset *kubernetes.Clientset
 
 	_, err := os.OpenFile("/var/run/secrets/kubernetes.io", os.O_RDWR, 0666)

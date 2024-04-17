@@ -5,6 +5,13 @@ following this [function guide][function guide]. It runs in a [docker][docker]
 container. The [package docs][package docs] are a useful reference when
 writing functions.
 
+This is the `v1alpha1` version of `function-shell`.
+Once [this pull request](https://github.com/crossplane/crossplane/pull/5543)
+to introduce how to support passing credentials
+to composition functions has been merged, the current functionality
+for how to pass secrets in `function-shell`
+is expected to follow the above pattern.
+
 The `function-shell` accepts commands to run in a shell and it
 returns the output to specified fields. It accepts the following parameters:
 

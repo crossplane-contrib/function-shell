@@ -15,7 +15,7 @@ spec:
         # name: crossplane-contrib-function-shell
         name: function-shell
       input:
-        apiVersion: shell.fn.crossplane.io/v1beta1
+        apiVersion: shell.fn.crossplane.io/v1alpha1
         kind: Parameters
         shellScriptsConfigMapsRef:
           - scriptNames:

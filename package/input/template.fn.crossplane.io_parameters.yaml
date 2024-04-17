@@ -16,7 +16,7 @@ spec:
     singular: parameters
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Input can be used to provide input to this Function.

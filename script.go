@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/crossplane-contrib/function-shell/input/v1beta1"
+	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,7 +15,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-func loadShellScripts(log logging.Logger, shellScriptsConfigMapsRef []v1beta1.ShellScriptsConfigMapRef) (map[string][]string, error) {
+func loadShellScripts(log logging.Logger, shellScriptsConfigMapsRef []v1alpha1.ShellScriptsConfigMapRef) (map[string][]string, error) {
 	shellScripts := make(map[string][]string)
 
 	for _, shellScriptsConfigMapRef := range shellScriptsConfigMapsRef {
@@ -30,7 +30,7 @@ func loadShellScripts(log logging.Logger, shellScriptsConfigMapsRef []v1beta1.Sh
 	return shellScripts, nil
 }
 
-func getShellScriptsFromConfigMap(shellScriptsConfigMapRef v1beta1.ShellScriptsConfigMapRef) (map[string][]string, error) {
+func getShellScriptsFromConfigMap(shellScriptsConfigMapRef v1alpha1.ShellScriptsConfigMapRef) (map[string][]string, error) {
 	var clientset *kubernetes.Clientset
 	scripts := make(map[string][]string)
 
@@ -55,7 +55,7 @@ func getShellScriptsFromConfigMap(shellScriptsConfigMapRef v1beta1.ShellScriptsC
 	return scripts, nil
 }
 
-func getScripts(clientset *kubernetes.Clientset, shellScriptsConfigMapRef v1beta1.ShellScriptsConfigMapRef) (map[string][]string, error) {
+func getScripts(clientset *kubernetes.Clientset, shellScriptsConfigMapRef v1alpha1.ShellScriptsConfigMapRef) (map[string][]string, error) {
 	scripts := make(map[string][]string)
 	scriptNames := shellScriptsConfigMapRef.ScriptNames
 	name := shellScriptsConfigMapRef.Name
