@@ -65,7 +65,7 @@ type ShellEnvVarsSecretRef struct {
 type ShellScriptsConfigMapRef struct {
 	// The name of the script entries in a ConfigMap
 	// Each ConfigMap can contain multiple scripts
-	ScriptNames []string `json:"scriptnames,omitempty"`
+	ScriptNames []string `json:"scriptNames,omitempty"`
 	// Name of Kubernetes ConfigMap
 	Name string `json:"name,omitempty"`
 	// Namespace where Kubernetes ConfigMap resides

@@ -6,7 +6,7 @@ Crossplane pull request. Find us in https://slack.crossplane.io/messages/dev if
 you need any help contributing.
 -->
 
-### Description of your changes
+# Description of your changes
 
 <!--
 Briefly describe what this pull request does, and how it is covered by tests.
@@ -19,11 +19,12 @@ We love pull requests that fix an open issue. If yours does, use the below line
 to indicate which issue it fixes, for example "Fixes #500".
 -->
 
-Fixes # 
+Fixes #
 
 I have:
 
-- [ ] Read and followed Crossplane's [contribution process].
+- [ ] Read and followed Crossplane's
+[contribution process][contribution process]. Also see [docs][docs].
 - [ ] Added or updated unit tests for my change.
 
 [contribution process]: https://git.io/fj2m9

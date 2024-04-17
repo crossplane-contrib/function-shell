@@ -18,7 +18,7 @@ spec:
         apiVersion: shell.fn.crossplane.io/v1beta1
         kind: Parameters
         shellScriptsConfigMapsRef:
-          - scriptnames:
+          - scriptNames:
               - hello-from-python.py
               - get-datadog-dashboard-ids.sh
             name: function-shell-script

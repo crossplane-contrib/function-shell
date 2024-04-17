@@ -77,7 +77,7 @@ spec:
                 namespace:
                   description: Namespace where Kubernetes ConfigMap resides
                   type: string
-                scriptnames:
+                scriptNames:
                   description: |-
                     The name of the script entries in a ConfigMap
                     Each ConfigMap can contain multiple scripts

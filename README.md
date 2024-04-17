@@ -1,25 +1,39 @@
 # function-shell
 
-This Crossplane composition function accepts commands to run in a shell and it
+This Crossplane composition [function][functions] is written in [go][go]
+following this [function guide][function guide]. It runs in a [docker][docker]
+container. The [package docs][package docs] are a useful reference when
+writing functions.
+
+The `function-shell` accepts commands to run in a shell and it
 returns the output to specified fields. It accepts the following parameters:
-- `shellScriptsConfigMapsRef` - referencing at least one Kuberneres [`ConfigMap`](https://kubernetes.io/docs/concepts/configuration/configmap/) with at least one shell script. This script can be written in an arbitrary
+
+- `shellScriptsConfigMapsRef` - referencing at least one Kuberneres
+[`ConfigMap`](https://kubernetes.io/docs/concepts/configuration/configmap/)
+with at least one shell script. This script can be written in an arbitrary
 shell language, for example bash or python3.
 - `shellEnvVarsSecretRef` - referencing environment variables in a
   Kubernetes secret. `shellEnvVarsSecretRef` requires a `name`, a
 `namespace` and a `key` for the secret. Inside of it, the shell
 expects a JSON structure with key value environment variables. Example:
 
-```
+```json
 {
     "ENV_FOO": "foo value",
     "ENV_BAR": "bar value"
 }
 ```
-- `shellEnvVars` - an array of environment variables with a `key` and `value` each.
-- `shellCommand` - a shell command line that can contain pipes and redirects and calling multiple programs.
-- `shellCommandField` - a reference to a field that contains the shell command line that should be run.
-- `stdoutField` - the path to the field where the shell standard output should be written.
-- `stderrField` - the path to the field where the shell standard error output should be written.
+
+- `shellEnvVars` - an array of environment variables with a
+`key` and `value` each.
+- `shellCommand` - a shell command line that can contain pipes
+and redirects and calling multiple programs.
+- `shellCommandField` - a reference to a field that contains
+the shell command line that should be run.
+- `stdoutField` - the path to the field where the shell
+standard output should be written.
+- `stderrField` - the path to the field where the shell
+standard error output should be written.
 
 ## Practical Example: Obtain Dashboard Ids from Datadog
 
@@ -46,11 +60,13 @@ read secrets and perform other actions that may be prohibited by default. Below
 is a `clusterrolebinding` that will work, but you should exercise appropriate
 caution when setting function permissions.
 
-```
+```shell
 #!/bin/bash
 NS="crossplane-system" # Replace with the namespace you use, e.g. upbound-system
 SA=$(kubectl -n ${NS} get sa -o name | grep function-shell | sed -e 's|serviceaccount\/|${NS}:|g')
-kubectl create clusterrolebinding function-shell-admin-binding --clusterrole cluster-admin --serviceaccount="${SA}"
+kubectl create clusterrolebinding function-shell-admin-binding \
+    --clusterrole cluster-admin \
+    --serviceaccount="${SA}"
 ```
 
 The composition reads a `ConfigMap` that contains 2 example scripts.
@@ -58,6 +74,7 @@ When you experiment with scripts in ConfigMaps, apply the yaml to the
 desired namespace, e.g. `kubectl -n crossplane-system apply -f
 example/in-cluster/configmap.yaml`. It is recommended to use
 the namespace where the `function-shell` pod is running.
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -80,7 +97,8 @@ data:
 
 The composition reads a datadog secret that looks like below.
 Replace `YOUR_API_KEY` and `YOUR_APP_KEY` with your respective keys.
-```yaml
+
+```json
 {
     "DATADOG_API_KEY": "YOUR_API_KEY",
     "DATADOG_APP_KEY": "YOIR_APP_KEY"
@@ -106,7 +124,7 @@ spec:
         apiVersion: shell.fn.crossplane.io/v1beta1
         kind: Parameters
         shellScriptsConfigMapsRef:
-          - scriptnames:
+          - scriptNames:
               - hello-from-python.py
               - get-datadog-dashboard-ids.sh
             name: function-shell-script
@@ -127,7 +145,7 @@ spec:
 
 The composition is called through the following `claim`.
 
-```
+```yaml
 ---
 apiVersion: upbound.io/v1alpha1
 kind: Shell
@@ -139,7 +157,7 @@ spec: {}
 The API definition is as follows. Note that the API contains status fields that
 are populated by `function-shell`.
 
-```
+```yaml
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -174,7 +192,8 @@ spec:
 
 The `crossplane beta trace` output after applying the in-cluster
 shell-claim.yaml is as follows:
-```
+
+```shell
 crossplane beta trace shell.upbound.io/shell-1
 NAME                      SYNCED   READY   STATUS
 Shell/shell-1 (default)   True     True    Available
@@ -185,7 +204,7 @@ The `XShell/shell-1-ttfbh` yaml output looks as per below. Notice the dashboard
 ids in the `status.atFunction.shell.stdout` field, and the `curl` stderr output
 in the `status.atFunction.shell.stderr` field.
 
-```
+```yaml
 apiVersion: upbound.io/v1alpha1
 kind: XShell
 metadata:
@@ -241,69 +260,83 @@ status:
     type: Ready
 ```
 
-# Development and test
+## Development and test
 
-## Function code generation
-```
+Crossplane has a [cli][cli] with useful commands for building packages.
+
+### Function code generation
+
+```shell
 go generate ./...
 ```
 
-## Build the function's runtime image - see Dockerfile
-```
+### Build the function's runtime image - see Dockerfile
+
+```shell
 docker build . --tag=runtime
 ```
 
-## Render example function output
+### Render example function output
+
 In Terminal 1
-```
+
+```shell
 go run . --insecure --debug
 ```
 
 In Terminal 2
-```
+
+```shell
 crossplane beta render \
     example/out-of-cluster/xr.yaml \
     example/out-of-cluster/composition.yaml \
     example/out-of-cluster/functions.yaml
 ```
 
-## Lint code
-```
+### Lint code
+
+```shell
 golangci-lint run
 ```
 
-## Run tests
-```
+### Run tests
+
+```shell
 go test -v -cover .
 ```
 
-## Docker build amd64 image
-```
+### Docker build amd64 image
+
+```shell
 docker build . --quiet --platform=linux/amd64 --tag runtime-amd64
 ```
 
-## Docker build arm64 image
-```
+### Docker build arm64 image
+
+```shell
 docker build . --quiet --platform=linux/arm64 --tag runtime-arm64
 ```
 
-## Crossplane build amd64 package
-```
+### Crossplane build amd64 package
+
+```shell
 crossplane xpkg build \
     --package-root=package \
     --embed-runtime-image=runtime-amd64 \
     --package-file=function-amd64.xpkg
 ```
 
-## Crossplane build arm64 package
-```
+### Crossplane build arm64 package
+
+```shell
 crossplane xpkg build \
     --package-root=package \
     --embed-runtime-image=runtime-arm64 \
     --package-file=function-arm64.xpkg
 ```
 
-# References
+## References
+
 [functions]: https://docs.crossplane.io/latest/concepts/composition-functions
 [go]: https://go.dev
 [function guide]: https://docs.crossplane.io/knowledge-base/guides/write-a-composition-function-in-go

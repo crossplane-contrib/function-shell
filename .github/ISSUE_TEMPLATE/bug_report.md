@@ -3,6 +3,9 @@ name: Bug Report
 about: Help us diagnose and fix bugs in this Function
 labels: bug
 ---
+
+# Bug Report
+
 <!--
 Thank you for helping to improve Crossplane!
 
@@ -11,22 +14,24 @@ for bug reports and feature requests. Please find us at https://slack.crossplane
 for questions, support, and discussion.
 -->
 
-### What happened?
+## What happened?
+
 <!--
 Please let us know what behaviour you expected and how this Function diverged
 from that behaviour.
 -->
 
+## How can we reproduce it?
 
-### How can we reproduce it?
 <!--
 Help us to reproduce your bug as succinctly and precisely as possible. Artifacts
 such as example manifests or a script that triggers the issue are highly
 appreciated!
 -->
 
-### What environment did it happen in?
-Function version: 
+## What environment did it happen in?
+
+Function version:
 
 <!--
 Include at least the version or commit of Crossplane you were running. Consider
