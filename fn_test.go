@@ -31,15 +31,14 @@ func TestRunFunction(t *testing.T) {
 		args   args
 		want   want
 	}{
-		"ResponseIsReturned": {
+		"ResponseIsParametersRequired": {
 			reason: "The Function should return a fatal result if no input was specified",
 			args: args{
 				req: &fnv1beta1.RunFunctionRequest{
 					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1beta1",
-						"kind": "Input",
-						"example": "Hello, world"
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters"
 					}`),
 				},
 			},
@@ -48,8 +47,167 @@ func TestRunFunction(t *testing.T) {
 					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
 					Results: []*fnv1beta1.Result{
 						{
-							Severity: fnv1beta1.Severity_SEVERITY_NORMAL,
-							Message:  "I was run with input \"Hello, world\"!",
+							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
+							Message:  "invalid Function input: parameters: Required value: one of ShellCommand or ShellCommandField is required",
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsEmptyShellCommand": {
+			reason: "The Function should return a response when after a script is run",
+			args: args{
+				req: &fnv1beta1.RunFunctionRequest{
+					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": ""
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1beta1.RunFunctionResponse{
+					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1beta1.Result{
+						{
+							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
+							Message:  "invalid Function input: parameters: Required value: one of ShellCommand or ShellCommandField is required",
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsEcho": {
+			reason: "The Function should write stdout to the specified field",
+			args: args{
+				req: &fnv1beta1.RunFunctionRequest{
+					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": "echo foo",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1beta1.RunFunctionResponse{
+					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1beta1.State{
+						Composite: &fnv1beta1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"spec": {
+									"atFunction": {
+										"shell": {
+											"stdout": "foo"
+										}
+									}
+								},
+								"status": {
+									"atFunction": {
+										"shell": {
+											"stderr": ""
+										}
+									}
+								}
+							}`),
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsErrorWhenShellCommandNotFound": {
+			reason: "The Function should write to the specified stderr field when the shellCommand is not found",
+			args: args{
+				req: &fnv1beta1.RunFunctionRequest{
+					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": "unkown-shell-command",
+						"stdoutField": "spec.atFunction.shell.stdout",
+						"stderrField": "spec.atFunction.shell.stderr"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1beta1.RunFunctionResponse{
+					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1beta1.Result{
+						{
+							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
+							Message:  "shellCmd unkown-shell-command for  failed: exit status 127",
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsEchoEnvVar": {
+			reason: "The Function should accept and use environment variables",
+			args: args{
+				req: &fnv1beta1.RunFunctionRequest{
+					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellEnvVars": [{"key": "TEST_ENV_VAR", "value": "foo"}],
+						"shellCommand": "echo ${TEST_ENV_VAR}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1beta1.RunFunctionResponse{
+					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1beta1.State{
+						Composite: &fnv1beta1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"spec": {
+									"atFunction": {
+										"shell": {
+											"stdout": "foo"
+										}
+									}
+								},
+								"status": {
+									"atFunction": {
+										"shell": {
+											"stderr": ""
+										}
+									}
+								}
+							}`),
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsSecretError": {
+			reason: "The Function should return an error when secrets are not loadable",
+			args: args{
+				req: &fnv1beta1.RunFunctionRequest{
+					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellEnvVarsSecretRef": {"name": "test-secret", "namespace": "crossplane-system", "key": "credentials"},
+						"shellCommand": "echo testing",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1beta1.RunFunctionResponse{
+					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1beta1.Result{
+						{
+							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
+							Message:  "cannot process contents of secret test-secret in namespace crossplane-system: Secret test-secret in namespace crossplane-system not found\n",
 						},
 					},
 				},

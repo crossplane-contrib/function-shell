@@ -1,13 +1,13 @@
 package main
 
 import (
+	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/function-sdk-go/resource"
-	"github.com/crossplane/function-shell/input/v1beta1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidateParameters validates the Parameters object.
-func ValidateParameters(p *v1beta1.Parameters, oxr *resource.Composite) *field.Error {
+func ValidateParameters(p *v1alpha1.Parameters, oxr *resource.Composite) *field.Error {
 	if p.ShellCommand == "" && p.ShellCommandField == "" {
 		return field.Required(field.NewPath("parameters"), "one of ShellCommand or ShellCommandField is required")
 	}

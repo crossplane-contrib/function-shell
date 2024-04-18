@@ -5,12 +5,13 @@ import (
 	"context"
 	"strings"
 
+	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
-	"github.com/crossplane/function-shell/input/v1beta1"
+
 	"github.com/keegancsmith/shell"
 )
 
@@ -27,7 +28,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 
 	rsp := response.To(req, response.DefaultTTL)
 
-	in := &v1beta1.Parameters{}
+	in := &v1alpha1.Parameters{}
 	if err := request.GetInput(req, in); err != nil {
 		response.Fatal(rsp, errors.Wrapf(err, "cannot get Function from input"))
 		return rsp, nil
@@ -61,13 +62,33 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	dxr.Resource.SetKind(oxr.Resource.GetKind())
 
 	stdoutField := in.StdoutField
-	if len(stdoutField) == 0 {
+	if len(in.StdoutField) == 0 {
 		stdoutField = "status.atFunction.shell.stdout"
 	}
-
 	stderrField := in.StderrField
-	if len(stderrField) == 0 {
+	if len(in.StderrField) == 0 {
 		stderrField = "status.atFunction.shell.stderr"
+	}
+
+	var shellScripts map[string][]string
+	if in.ShellScriptsConfigMapsRef != nil {
+		shellScripts, err = loadShellScripts(log, in.ShellScriptsConfigMapsRef)
+		if err != nil {
+			response.Fatal(rsp, errors.Wrapf(err, "cannot process shell script ConfigMaps"))
+			return rsp, nil
+		}
+	}
+
+	copyShellScripts := ""
+	if len(shellScripts) > 0 {
+		for shellScriptName, shellScript := range shellScripts {
+			copyShellScripts = "rm -f ./scripts/" + shellScriptName + ";"
+			for _, line := range shellScript {
+				escapedLine := strings.ReplaceAll(line, "'", "\"'\"")
+				copyShellScripts = copyShellScripts + "echo '" + escapedLine + "'>> ./scripts/" + shellScriptName + ";"
+			}
+			copyShellScripts = copyShellScripts + "/bin/chmod +x ./scripts/" + shellScriptName + ";"
+		}
 	}
 
 	shellCmd := ""
@@ -90,7 +111,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		shellEnvVars[envVar.Key] = envVar.Value
 	}
 
-	if in.ShellEnvVarsSecretRef != (v1beta1.ShellEnvVarsSecretRef{}) {
+	if in.ShellEnvVarsSecretRef != (v1alpha1.ShellEnvVarsSecretRef{}) {
 		shellEnvVars, err = addShellEnvVarsFromSecret(in.ShellEnvVarsSecretRef, shellEnvVars)
 		if err != nil {
 			response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of secret %s in namespace %s", in.ShellEnvVarsSecretRef.Name, in.ShellEnvVarsSecretRef.Namespace))
@@ -99,6 +120,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	}
 
 	var exportCmds string
+	//exportCmds = "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
 	for k, v := range shellEnvVars {
 		exportCmds = exportCmds + "export " + k + "=\"" + v + "\";"
 	}
@@ -106,7 +128,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	log.Info(shellCmd)
 
 	var stdout, stderr bytes.Buffer
-	cmd := shell.Commandf(exportCmds + shellCmd)
+	cmd := shell.Commandf(exportCmds + copyShellScripts + shellCmd)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
@@ -115,14 +137,14 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		return rsp, nil
 	}
 	out := strings.TrimSpace(stdout.String())
-	err = dxr.Resource.SetValue(in.StdoutField, out)
+	err = dxr.Resource.SetValue(stdoutField, out)
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", in.StdoutField, out, oxr.Resource.GetKind()))
+		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", stdoutField, out, oxr.Resource.GetKind()))
 		return rsp, nil
 	}
-	err = dxr.Resource.SetValue(in.StderrField, strings.TrimSpace(stderr.String()))
+	err = dxr.Resource.SetValue(stderrField, strings.TrimSpace(stderr.String()))
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", in.StderrField, out, oxr.Resource.GetKind()))
+		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", stderrField, out, oxr.Resource.GetKind()))
 		return rsp, nil
 	}
 	if err := response.SetDesiredCompositeResource(rsp, dxr); err != nil {

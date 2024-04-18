@@ -1,53 +1,115 @@
 # function-shell
 
-This Crossplane composition function accepts commands to run in a shell and it
-returns the output to specified fields. It accepts the following paramereters:
+This Crossplane composition [function][functions] is written in [go][go]
+following this [function guide][function guide]. It runs in a [docker][docker]
+container. The [package docs][package docs] are a useful reference when
+writing functions.
+
+This is the `v1alpha1` version of `function-shell`.
+Once [this pull request](https://github.com/crossplane/crossplane/pull/5543)
+to introduce how to support passing credentials
+to composition functions has been merged, the current functionality
+for how to pass secrets in `function-shell`
+is expected to follow the above pattern.
+
+The `function-shell` accepts commands to run in a shell and it
+returns the output to specified fields. It accepts the following parameters:
+
+- `shellScriptsConfigMapsRef` - referencing at least one Kuberneres
+[`ConfigMap`](https://kubernetes.io/docs/concepts/configuration/configmap/)
+with at least one shell script. This script can be written in an arbitrary
+shell language, for example bash or python3.
 - `shellEnvVarsSecretRef` - referencing environment variables in a
-  Kubernetes secret. shellEnvVarsSecretRef requires a `name`, a
+  Kubernetes secret. `shellEnvVarsSecretRef` requires a `name`, a
 `namespace` and a `key` for the secret. Inside of it, the shell
 expects a JSON structure with key value environment variables. Example:
 
-```
+```json
 {
     "ENV_FOO": "foo value",
     "ENV_BAR": "bar value"
 }
 ```
-- 'shellEnvVars' - an array of environment variables with a <b>key</b> and <b>value</b>
-  each.
-- 'shellCommand' - a shell command line that can contain pipes and
-  redirects and calling multiple programs.
-- 'stdoutField' - the path to the field where the shell standard output
-  should be written.
-- 'stderrField' - the path to the field where the shell standard error
-  output should be written.
+
+- `shellEnvVars` - an array of environment variables with a
+`key` and `value` each.
+- `shellCommand` - a shell command line that can contain pipes
+and redirects and calling multiple programs.
+- `shellCommandField` - a reference to a field that contains
+the shell command line that should be run.
+- `stdoutField` - the path to the field where the shell
+standard output should be written.
+- `stderrField` - the path to the field where the shell
+standard error output should be written.
 
 ## Practical Example: Obtain Dashboard Ids from Datadog
 
-The composition calls the `function-shell` instructing it to obtain dashboard ids
-from a Datadog account. For this, it specifies the location of a Kubernetes
-secret where the `DATADOG_API_KEY` and `DATADOG_APP_KEY` environment variable values
-are stored. The Datadog API endpoint is passed in a clear text environment
-variable. The shell command uses a `curl` to the endpoint with a header that
-contains the access credentials. The command output is piped into jq and
-filtered for the ids.
+The composition calls the `function-shell` instructing it to obtain dashboard
+ids from a [Datadog](https://www.datadoghq.com/) account.
+For this, the composition specifies the location
+of a Kubernetes secret where the `DATADOG_API_KEY` and `DATADOG_APP_KEY`
+environment variable values are stored. The Datadog API endpoint is passed
+in a clear text `DATADOG_API_URL` environment variable. The shell command
+uses a `curl` to the endpoint with a header that contains the access
+credentials. The command output is piped into
+[jq](https://jqlang.github.io/jq/) and filtered for the ids.
 
-The `function-shell` writes the dashboard ids to the specified output status field, and
-any output that went to stderr into the specified stderr status field.
+The `function-shell` writes the dashboard ids to the
+specified output status field, and any output that went
+to stderr into the specified stderr status field.
 
 The composition is for illustration purposes only. When using the
 `function-shell` in your own compositions, you may want to patch function input
 from claim and other composition field values.
 
-Note: `function-shell` has to receive permissions in form of a rolebinding to
+Note: `function-shell` requires permissions in form of a `rolebinding` to
 read secrets and perform other actions that may be prohibited by default. Below
-is a `clusterrolebinding` that will work, but you should exercise appropriate caution when
-setting function permissions.
+is a `clusterrolebinding` that will work, but you should exercise appropriate
+caution when setting function permissions.
 
-```
+```shell
 #!/bin/bash
-SA=$(kubectl -n upbound-system get sa -o name | grep function-shell | sed -e 's|serviceaccount\/|upbound-system:|g')
-kubectl create clusterrolebinding function-shell-admin-binding --clusterrole cluster-admin --serviceaccount="${SA}"
+NS="crossplane-system" # Replace with the namespace you use, e.g. upbound-system
+SA=$(kubectl -n ${NS} get sa -o name | grep function-shell | sed -e 's|serviceaccount\/|${NS}:|g')
+kubectl create clusterrolebinding function-shell-admin-binding \
+    --clusterrole cluster-admin \
+    --serviceaccount="${SA}"
+```
+
+The composition reads a `ConfigMap` that contains 2 example scripts.
+When you experiment with scripts in ConfigMaps, apply the yaml to the
+desired namespace, e.g. `kubectl -n crossplane-system apply -f
+example/in-cluster/configmap.yaml`. It is recommended to use
+the namespace where the `function-shell` pod is running.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: function-shell-script
+data:
+  hello-from-python.py: |
+    #!/usr/bin/python3
+
+    print ( "hello from python" )
+  get-datadog-dashboard-ids.sh: |
+    #!/bin/bash
+
+    curl -X GET "${DATADOG_API_URL}" \
+      -H "Accept: application/json" \
+      -H "DD-API-KEY: ${DATADOG_API_KEY}" \
+      -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
+      jq '.dashboards[] .id';
+```
+
+The composition reads a datadog secret that looks like below.
+Replace `YOUR_API_KEY` and `YOUR_APP_KEY` with your respective keys.
+
+```json
+{
+    "DATADOG_API_KEY": "YOUR_API_KEY",
+    "DATADOG_APP_KEY": "YOIR_APP_KEY"
+}
 ```
 
 ```yaml
@@ -68,6 +130,13 @@ spec:
       input:
         apiVersion: shell.fn.crossplane.io/v1beta1
         kind: Parameters
+
+        shellScriptsConfigMapsRef:
+          - scriptNames:
+              - hello-from-python.py
+              - get-datadog-dashboard-ids.sh
+            name: function-shell-script
+            namespace: upbound-system
         shellEnvVarsSecretRef:
           name: datadog-secret
           namespace: upbound-system
@@ -76,18 +145,15 @@ spec:
           - key: DATADOG_API_URL
             value: "https://api.datadoghq.com/api/v1/dashboard"
         shellCommand: |
-          curl -X GET "${DATADOG_API_URL}" \
-            -H "Accept: application/json" \
-            -H "DD-API-KEY: ${DATADOG_API_KEY}" \
-            -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
-             jq '.dashboards[] .id';
+          /scripts/get-datadog-dashboard-ids.sh
+          python3 /scripts/hello-from-python.py|awk '{print $3}'|tr "p" "P"
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr
 ```
 
 The composition is called through the following `claim`.
 
-```
+```yaml
 ---
 apiVersion: upbound.io/v1alpha1
 kind: Shell
@@ -99,7 +165,7 @@ spec: {}
 The API definition is as follows. Note that the API contains status fields that
 are populated by `function-shell`.
 
-```
+```yaml
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -134,8 +200,9 @@ spec:
 
 The `crossplane beta trace` output after applying the in-cluster
 shell-claim.yaml is as follows:
-```
-cbt shell.upbound.io/shell-1
+
+```shell
+crossplane beta trace shell.upbound.io/shell-1
 NAME                      SYNCED   READY   STATUS
 Shell/shell-1 (default)   True     True    Available
 └─ XShell/shell-1-ttfbh   True     True    Available
@@ -145,22 +212,22 @@ The `XShell/shell-1-ttfbh` yaml output looks as per below. Notice the dashboard
 ids in the `status.atFunction.shell.stdout` field, and the `curl` stderr output
 in the `status.atFunction.shell.stderr` field.
 
-```
+```yaml
 apiVersion: upbound.io/v1alpha1
 kind: XShell
 metadata:
-  creationTimestamp: "2024-04-05T04:47:03Z"
+  creationTimestamp: "2024-04-11T02:31:54Z"
   finalizers:
   - composite.apiextensions.crossplane.io
   generateName: shell-1-
-  generation: 3
+  generation: 17
   labels:
     crossplane.io/claim-name: shell-1
     crossplane.io/claim-namespace: default
-    crossplane.io/composite: shell-1-ttfbh
-  name: shell-1-ttfbh
-  resourceVersion: "2181275"
-  uid: 9ebda770-bab3-4822-bd36-739cea5cd35e
+    crossplane.io/composite: shell-1-wjjs4
+  name: shell-1-wjjs4
+  resourceVersion: "2577566"
+  uid: 77d24f9f-96db-4758-9155-9364ad227d0a
 spec:
   claimRef:
     apiVersion: upbound.io/v1alpha1
@@ -170,7 +237,7 @@ spec:
   compositionRef:
     name: shell.upbound.io
   compositionRevisionRef:
-    name: shell.upbound.io-ed28247
+    name: shell.upbound.io-2403237
   compositionUpdatePolicy: Automatic
   resourceRefs: []
 status:
@@ -179,9 +246,8 @@ status:
       stderr: "% Total    % Received % Xferd  Average Speed   Time    Time     Time
         \ Current\n                                 Dload  Upload   Total   Spent
         \   Left  Speed\n\r  0     0    0     0    0     0      0      0 --:--:--
-        --:--:-- --:--:--     0\r  0     0    0     0    0     0      0      0 --:--:--
-        --:--:-- --:--:--     0\r100  4255  100  4255    0     0   9081      0 --:--:--
-        --:--:-- --:--:--  9072"
+        --:--:-- --:--:--     0\r100  4255  100  4255    0     0   8862      0 --:--:--
+        --:--:-- --:--:--  8864"
       stdout: |-
         "vn4-agn-ftd"
         "9pt-bhb-uwj"
@@ -190,29 +256,94 @@ status:
         "ssx-sci-uvi"
         "3fd-h4e-7w6"
         "qth-94z-ip5"
+        Python
   conditions:
-  - lastTransitionTime: "2024-04-05T04:47:29Z"
+  - lastTransitionTime: "2024-04-11T02:53:01Z"
     reason: ReconcileSuccess
     status: "True"
     type: Synced
-  - lastTransitionTime: "2024-04-05T04:47:29Z"
+  - lastTransitionTime: "2024-04-11T02:31:55Z"
     reason: Available
     status: "True"
     type: Ready
 ```
 
-# Run code generation - see input/generate.go
-$ go generate ./...
+## Development and test
 
-# Run tests - see fn_test.go
-$ go test ./...
+Crossplane has a [cli][cli] with useful commands for building packages.
 
-# Build the function's runtime image - see Dockerfile
-$ docker build . --tag=runtime
+### Function code generation
 
-# Build a function package - see package/crossplane.yaml
-$ crossplane xpkg build -f package --embed-runtime-image=runtime
+```shell
+go generate ./...
 ```
+
+### Build the function's runtime image - see Dockerfile
+
+```shell
+docker build . --tag=runtime
+```
+
+### Render example function output
+
+In Terminal 1
+
+```shell
+go run . --insecure --debug
+```
+
+In Terminal 2
+
+```shell
+crossplane beta render \
+    example/out-of-cluster/xr.yaml \
+    example/out-of-cluster/composition.yaml \
+    example/out-of-cluster/functions.yaml
+```
+
+### Lint code
+
+```shell
+golangci-lint run
+```
+
+### Run tests
+
+```shell
+go test -v -cover .
+```
+
+### Docker build amd64 image
+
+```shell
+docker build . --quiet --platform=linux/amd64 --tag runtime-amd64
+```
+
+### Docker build arm64 image
+
+```shell
+docker build . --quiet --platform=linux/arm64 --tag runtime-arm64
+```
+
+### Crossplane build amd64 package
+
+```shell
+crossplane xpkg build \
+    --package-root=package \
+    --embed-runtime-image=runtime-amd64 \
+    --package-file=function-amd64.xpkg
+```
+
+### Crossplane build arm64 package
+
+```shell
+crossplane xpkg build \
+    --package-root=package \
+    --embed-runtime-image=runtime-arm64 \
+    --package-file=function-arm64.xpkg
+```
+
+## References
 
 [functions]: https://docs.crossplane.io/latest/concepts/composition-functions
 [go]: https://go.dev

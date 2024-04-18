@@ -1,4 +1,4 @@
-module github.com/crossplane/function-shell
+module github.com/crossplane-contrib/function-shell
 
 go 1.21
 

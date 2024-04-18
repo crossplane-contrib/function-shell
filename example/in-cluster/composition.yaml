@@ -11,22 +11,27 @@ spec:
   pipeline:
     - step: shell
       functionRef:
+        # When installed through a package manager, use
+        # name: crossplane-contrib-function-shell
         name: function-shell
       input:
-        apiVersion: shell.fn.crossplane.io/v1beta1
+        apiVersion: shell.fn.crossplane.io/v1alpha1
         kind: Parameters
+        shellScriptsConfigMapsRef:
+          - scriptNames:
+              - hello-from-python.py
+              - get-datadog-dashboard-ids.sh
+            name: function-shell-script
+            namespace: upbound-system
         shellEnvVarsSecretRef:
+          key: credentials
           name: datadog-secret
           namespace: upbound-system
-          key: credentials
         shellEnvVars:
           - key: DATADOG_API_URL
             value: "https://api.datadoghq.com/api/v1/dashboard"
         shellCommand: |
-          curl -X GET "${DATADOG_API_URL}" \
-            -H "Accept: application/json" \
-            -H "DD-API-KEY: ${DATADOG_API_KEY}" \
-            -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
-             jq '.dashboards[] .id';
+          /scripts/get-datadog-dashboard-ids.sh
+          python3 /scripts/hello-from-python.py|awk '{print $3}'|tr "p" "P"
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr

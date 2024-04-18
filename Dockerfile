@@ -11,6 +11,7 @@ ARG GO_VERSION=1
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS build
 
 RUN apt-get update && apt-get install -y jq unzip zsh
+RUN mkdir /scripts && chown 2000:2000 /scripts
 
 # TODO: Install awscli, gcloud
 # RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" && \
@@ -43,11 +44,15 @@ RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/go-build \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /function .
 
-# Produce the Function image. We use a very lightweight 'distroless' image that
-# does not include any of the build tools used in previous stages.
-#FROM gcr.io/distroless/base-debian11 AS image
+# Produce the Function image. We use a very lightweight 'distroless'
+# Python3 image that includes useful commands but not build tools used
+# in previous stages.
+# FROM python:3.12
 FROM gcr.io/distroless/python3-debian12 AS image
+
 WORKDIR /
+COPY --from=build --chown=2000:2000 /scripts /scripts
+
 COPY --from=build /bin /bin
 COPY --from=build /etc /etc
 COPY --from=build /lib /lib

@@ -16,7 +16,7 @@ spec:
     singular: parameters
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Input can be used to provide input to this Function.
@@ -58,12 +58,34 @@ spec:
             description: shellEnvVarSecretRef
             properties:
               key:
+                description: The Key whose value is the secret
                 type: string
               name:
+                description: Name of the Kubernetes secret
                 type: string
               namespace:
+                description: Namespace where Kubernetes secret resides
                 type: string
             type: object
+          shellScriptsConfigMapsRef:
+            description: shellScriptFiles
+            items:
+              properties:
+                name:
+                  description: Name of Kubernetes ConfigMap
+                  type: string
+                namespace:
+                  description: Namespace where Kubernetes ConfigMap resides
+                  type: string
+                scriptNames:
+                  description: |-
+                    The name of the script entries in a ConfigMap
+                    Each ConfigMap can contain multiple scripts
+                  items:
+                    type: string
+                  type: array
+              type: object
+            type: array
           stderrField:
             description: stderrField
             type: string
