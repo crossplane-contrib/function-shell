@@ -52,6 +52,7 @@ FROM gcr.io/distroless/python3-debian12 AS image
 
 WORKDIR /
 COPY --from=build --chown=2000:2000 /scripts /scripts
+
 COPY --from=build /bin /bin
 COPY --from=build /etc /etc
 COPY --from=build /lib /lib

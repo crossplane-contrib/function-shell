@@ -1,5 +1,6 @@
 REPO_URL="xpkg.upbound.io/crossplane-contrib/function-shell"
 VERSION_TAG="v0.0.6"
+
 #PACKAGE_FILES="function-amd64.xpkg,function-arm64.xpkg"
 PACKAGE_FILES="function-arm64.xpkg"
 

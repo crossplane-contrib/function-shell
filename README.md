@@ -130,6 +130,7 @@ spec:
       input:
         apiVersion: shell.fn.crossplane.io/v1beta1
         kind: Parameters
+
         shellScriptsConfigMapsRef:
           - scriptNames:
               - hello-from-python.py
