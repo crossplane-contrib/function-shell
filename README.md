@@ -15,12 +15,12 @@ is expected to follow the above pattern.
 The `function-shell` accepts commands to run in a shell and it
 returns the output to specified fields. It accepts the following parameters:
 
-- `shellScriptsConfigMapsRef` - referencing at least one Kuberneres
+- `shellScriptsConfigMapsRef` - referencing at least one Kubernetes
 [`ConfigMap`](https://kubernetes.io/docs/concepts/configuration/configmap/)
 with at least one shell script. This script can be written in an arbitrary
 shell language, for example bash or python3.
 - `shellEnvVarsSecretRef` - referencing environment variables in a
-  Kubernetes secret. `shellEnvVarsSecretRef` requires a `name`, a
+Kubernetes secret. `shellEnvVarsSecretRef` requires a `name`, a
 `namespace` and a `key` for the secret. Inside of it, the shell
 expects a JSON structure with key value environment variables. Example:
 
