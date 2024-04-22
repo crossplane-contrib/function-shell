@@ -78,9 +78,7 @@ func getScripts(clientset *kubernetes.Clientset, shellScriptsConfigMapRef v1alph
 	}
 
 	for _, scriptName := range scriptNames {
-		for _, scriptLine := range strings.Split(scriptConfigMap.Data[scriptName], "\n") {
-			scripts[scriptName] = append(scripts[scriptName], scriptLine)
-		}
+		scripts[scriptName] = append(scripts[scriptName], strings.Split(scriptConfigMap.Data[scriptName], "\n")...)
 	}
 
 	return scripts, nil

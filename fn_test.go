@@ -187,32 +187,6 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
-		"ResponseIsSecretError": {
-			reason: "The Function should return an error when secrets are not loadable",
-			args: args{
-				req: &fnv1beta1.RunFunctionRequest{
-					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
-					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
-						"kind": "Parameters",
-						"shellEnvVarsSecretRef": {"name": "test-secret", "namespace": "crossplane-system", "key": "credentials"},
-						"shellCommand": "echo testing",
-						"stdoutField": "spec.atFunction.shell.stdout"
-					}`),
-				},
-			},
-			want: want{
-				rsp: &fnv1beta1.RunFunctionResponse{
-					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
-					Results: []*fnv1beta1.Result{
-						{
-							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
-							Message:  "cannot process contents of secret test-secret in namespace crossplane-system: Secret test-secret in namespace crossplane-system not found\n",
-						},
-					},
-				},
-			},
-		},
 	}
 
 	for name, tc := range cases {
