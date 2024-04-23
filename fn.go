@@ -70,27 +70,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		stderrField = "status.atFunction.shell.stderr"
 	}
 
-	var shellScripts map[string][]string
-	if in.ShellScriptsConfigMapsRef != nil {
-		shellScripts, err = loadShellScripts(log, in.ShellScriptsConfigMapsRef)
-		if err != nil {
-			response.Fatal(rsp, errors.Wrapf(err, "cannot process shell script ConfigMaps"))
-			return rsp, nil
-		}
-	}
-
-	copyShellScripts := ""
-	if len(shellScripts) > 0 {
-		for shellScriptName, shellScript := range shellScripts {
-			copyShellScripts = "rm -f ./scripts/" + shellScriptName + ";"
-			for _, line := range shellScript {
-				escapedLine := strings.ReplaceAll(line, "'", "\"'\"")
-				copyShellScripts = copyShellScripts + "echo '" + escapedLine + "'>> ./scripts/" + shellScriptName + ";"
-			}
-			copyShellScripts = copyShellScripts + "/bin/chmod +x ./scripts/" + shellScriptName + ";"
-		}
-	}
-
 	shellCmd := ""
 	if len(in.ShellCommand) == 0 && len(in.ShellCommandField) == 0 {
 		log.Info("no shell command in in.ShellCommand nor in.ShellCommandField")
@@ -128,7 +107,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	log.Info(shellCmd)
 
 	var stdout, stderr bytes.Buffer
-	cmd := shell.Commandf(exportCmds + copyShellScripts + shellCmd)
+	cmd := shell.Commandf(exportCmds + shellCmd)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
