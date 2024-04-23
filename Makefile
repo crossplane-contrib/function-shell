@@ -1,5 +1,5 @@
 REPO_URL="xpkg.upbound.io/crossplane-contrib/function-shell"
-VERSION_TAG="v0.0.6"
+VERSION_TAG="v0.1.0"
 
 #PACKAGE_FILES="function-amd64.xpkg,function-arm64.xpkg"
 PACKAGE_FILES="function-arm64.xpkg"
@@ -45,9 +45,9 @@ test:                   ## Run Code Tests
 
 render:                 ## Render Examples, Requires make debug first
 			crossplane beta render \
-				example/out-of-cluster/xr.yaml \
-				example/out-of-cluster/composition.yaml \
-				example/out-of-cluster/functions.yaml
+				example/xr.yaml \
+				example/composition.yaml \
+				example/functions.yaml
 
 debug:                  ## Run Shell Function For Rendering Examples
 			go run . --insecure --debug

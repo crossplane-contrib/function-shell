@@ -27,10 +27,6 @@ type Parameters struct {
 	// +optional
 	ShellEnvVars []ShellEnvVar `json:"shellEnvVars,omitempty"`
 
-	// shellScriptFiles
-	// +optional
-	ShellScriptsConfigMapsRef []ShellScriptsConfigMapRef `json:"shellScriptsConfigMapsRef"`
-
 	// shellCmd
 	// +optional
 	ShellCommand string `json:"shellCommand,omitempty"`
@@ -59,15 +55,5 @@ type ShellEnvVarsSecretRef struct {
 	// Name of the Kubernetes secret
 	Name string `json:"name,omitempty"`
 	// Namespace where Kubernetes secret resides
-	Namespace string `json:"namespace,omitempty"`
-}
-
-type ShellScriptsConfigMapRef struct {
-	// The name of the script entries in a ConfigMap
-	// Each ConfigMap can contain multiple scripts
-	ScriptNames []string `json:"scriptNames,omitempty"`
-	// Name of Kubernetes ConfigMap
-	Name string `json:"name,omitempty"`
-	// Namespace where Kubernetes ConfigMap resides
 	Namespace string `json:"namespace,omitempty"`
 }

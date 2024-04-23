@@ -15,10 +15,6 @@ is expected to follow the above pattern.
 The `function-shell` accepts commands to run in a shell and it
 returns the output to specified fields. It accepts the following parameters:
 
-- `shellScriptsConfigMapsRef` - referencing at least one Kubernetes
-[`ConfigMap`](https://kubernetes.io/docs/concepts/configuration/configmap/)
-with at least one shell script. This script can be written in an arbitrary
-shell language, for example bash or python3.
 - `shellEnvVarsSecretRef` - referencing environment variables in a
 Kubernetes secret. `shellEnvVarsSecretRef` requires a `name`, a
 `namespace` and a `key` for the secret. Inside of it, the shell
@@ -76,32 +72,6 @@ kubectl create clusterrolebinding function-shell-admin-binding \
     --serviceaccount="${SA}"
 ```
 
-The composition reads a `ConfigMap` that contains 2 example scripts.
-When you experiment with scripts in ConfigMaps, apply the yaml to the
-desired namespace, e.g. `kubectl -n crossplane-system apply -f
-example/in-cluster/configmap.yaml`. It is recommended to use
-the namespace where the `function-shell` pod is running.
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: function-shell-script
-data:
-  hello-from-python.py: |
-    #!/usr/bin/python3
-
-    print ( "hello from python" )
-  get-datadog-dashboard-ids.sh: |
-    #!/bin/bash
-
-    curl -X GET "${DATADOG_API_URL}" \
-      -H "Accept: application/json" \
-      -H "DD-API-KEY: ${DATADOG_API_KEY}" \
-      -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
-      jq '.dashboards[] .id';
-```
-
 The composition reads a datadog secret that looks like below.
 Replace `YOUR_API_KEY` and `YOUR_APP_KEY` with your respective keys.
 
@@ -130,13 +100,6 @@ spec:
       input:
         apiVersion: shell.fn.crossplane.io/v1beta1
         kind: Parameters
-
-        shellScriptsConfigMapsRef:
-          - scriptNames:
-              - hello-from-python.py
-              - get-datadog-dashboard-ids.sh
-            name: function-shell-script
-            namespace: upbound-system
         shellEnvVarsSecretRef:
           name: datadog-secret
           namespace: upbound-system
@@ -145,8 +108,11 @@ spec:
           - key: DATADOG_API_URL
             value: "https://api.datadoghq.com/api/v1/dashboard"
         shellCommand: |
-          /scripts/get-datadog-dashboard-ids.sh
-          python3 /scripts/hello-from-python.py|awk '{print $3}'|tr "p" "P"
+            curl -X GET "${DATADOG_API_URL}" \
+              -H "Accept: application/json" \
+              -H "DD-API-KEY: ${DATADOG_API_KEY}" \
+              -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
+              jq '.dashboards[] .id';
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr
 ```
