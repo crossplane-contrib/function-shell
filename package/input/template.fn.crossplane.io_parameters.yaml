@@ -54,17 +54,16 @@ spec:
                   type: string
               type: object
             type: array
-          shellEnvVarsSecretRef:
-            description: shellEnvVarSecretRef
+          shellEnvVarsRef:
+            description: shellEnvVarsRef
             properties:
-              key:
+              keys:
                 description: The Key whose value is the secret
-                type: string
+                items:
+                  type: string
+                type: array
               name:
-                description: Name of the Kubernetes secret
-                type: string
-              namespace:
-                description: Namespace where Kubernetes secret resides
+                description: Name of the enviroment variable
                 type: string
             type: object
           stderrField:

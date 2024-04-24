@@ -45,9 +45,9 @@ test:                   ## Run Code Tests
 
 render:                 ## Render Examples, Requires make debug first
 			crossplane beta render \
-				example/xr.yaml \
-				example/composition.yaml \
-				example/functions.yaml
+				example/echo/xr.yaml \
+				example/echo/composition.yaml \
+				example/echo/functions.yaml
 
 debug:                  ## Run Shell Function For Rendering Examples
 			go run . --insecure --debug

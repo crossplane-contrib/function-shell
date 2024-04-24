@@ -90,10 +90,10 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		shellEnvVars[envVar.Key] = envVar.Value
 	}
 
-	if in.ShellEnvVarsSecretRef != (v1alpha1.ShellEnvVarsSecretRef{}) {
-		shellEnvVars, err = addShellEnvVarsFromSecret(in.ShellEnvVarsSecretRef, shellEnvVars)
+	if len(in.ShellEnvVarsRef.Keys) > 0 {
+		shellEnvVars, err = addShellEnvVarsFromRef(in.ShellEnvVarsRef, shellEnvVars)
 		if err != nil {
-			response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of secret %s in namespace %s", in.ShellEnvVarsSecretRef.Name, in.ShellEnvVarsSecretRef.Namespace))
+			response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of shellEnvVarsRef %s", in.ShellEnvVarsRef.Name))
 			return rsp, nil
 		}
 	}
