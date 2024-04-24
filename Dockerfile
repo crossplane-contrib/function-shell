@@ -10,7 +10,7 @@ ARG GO_VERSION=1
 # architecture that we're building the function for.
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS build
 
-RUN apt-get update && apt-get install -y jq unzip zsh
+RUN apt-get update && apt-get install -y coreutils jq unzip zsh
 RUN mkdir /scripts && chown 2000:2000 /scripts
 
 # TODO: Install awscli, gcloud

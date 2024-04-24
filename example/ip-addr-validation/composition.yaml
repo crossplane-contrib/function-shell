@@ -1,0 +1,27 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: shell-example
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XR
+  mode: Pipeline
+  pipeline:
+    - step: shell
+      functionRef:
+        name: function-shell
+      input:
+        apiVersion: shell.fn.crossplane.io/v1alpha1
+        kind: Parameters
+        shellEnvVars:
+          - key: IP_ADDRESS
+            value: "10.10.52.34"
+        shellCommand: |
+          if [[ $IP_ADDRESS =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "valid"
+          else
+            echo "invalid"
+          fi
+        stdoutField: status.atFunction.shell.stdout
+        stderrField: status.atFunction.shell.stderr

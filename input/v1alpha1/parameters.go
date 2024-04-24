@@ -19,9 +19,9 @@ type Parameters struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// shellEnvVarSecretRef
+	// shellEnvVarsRef
 	// +optional
-	ShellEnvVarsSecretRef ShellEnvVarsSecretRef `json:"shellEnvVarsSecretRef,omitempty"`
+	ShellEnvVarsRef ShellEnvVarsRef `json:"shellEnvVarsRef,omitempty"`
 
 	// shellEnvVars
 	// +optional
@@ -49,11 +49,9 @@ type ShellEnvVar struct {
 	Value string `json:"value,omitempty"`
 }
 
-type ShellEnvVarsSecretRef struct {
+type ShellEnvVarsRef struct {
 	// The Key whose value is the secret
-	Key string `json:"key,omitempty"`
-	// Name of the Kubernetes secret
+	Keys []string `json:"keys,omitempty"`
+	// Name of the enviroment variable
 	Name string `json:"name,omitempty"`
-	// Namespace where Kubernetes secret resides
-	Namespace string `json:"namespace,omitempty"`
 }

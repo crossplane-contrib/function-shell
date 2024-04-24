@@ -14,18 +14,10 @@ spec:
       input:
         apiVersion: shell.fn.crossplane.io/v1alpha1
         kind: Parameters
-        shellEnvVarsSecretRef:
-          name: datadog-secret
-          namespace: upbound-system
-          key: credentials
         shellEnvVars:
-          - key: DATADOG_API_URL
-            value: "https://api.datadoghq.com/api/v1/dashboard"
+          - key: ECHO
+            value: "SGVsbG8gZnJvbSBzaGVsbAo="
         shellCommand: |
-          curl -X GET "${DATADOG_API_URL}" \
-            -H "Accept: application/json" \
-            -H "DD-API-KEY: ${DATADOG_API_KEY}" \
-            -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
-             jq '.dashboards[] .id';
+           echo ${ECHO}|base64 -d|sed s/^h/H/
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr

@@ -10,21 +10,53 @@ Once [this pull request](https://github.com/crossplane/crossplane/pull/5543)
 to introduce how to support passing credentials
 to composition functions has been merged, the current functionality
 for how to pass secrets in `function-shell`
-is expected to follow the above pattern.
+is expected to be enhanced with the above pattern.
 
 The `function-shell` accepts commands to run in a shell and it
 returns the output to specified fields. It accepts the following parameters:
 
-- `shellEnvVarsSecretRef` - referencing environment variables in a
-Kubernetes secret. `shellEnvVarsSecretRef` requires a `name`, a
-`namespace` and a `key` for the secret. Inside of it, the shell
-expects a JSON structure with key value environment variables. Example:
+- `shellEnvVarsRef` - referencing environment variables in the
+function-shell Kubernetes pod that were loaded through a
+`deploymentRuntimeConfig`. The file MUST be in `JSON` format.
+It can be a Kubernetes secret. `shellEnvVarsRef` requires a `name`
+for the pod environment variable, and `keys` for the keys Inside
+of the JSON formatted pod environment variable that have associated
+values.
+
+Example secret:
 
 ```json
 {
     "ENV_FOO": "foo value",
     "ENV_BAR": "bar value"
 }
+```
+
+Example `deploymentRuntimeConfig`:
+
+```yaml
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: function-shell
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - name: package-runtime
+              args:
+                - --debug
+              env:
+                - name: DATADOG_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      key: credentials
+                      name: datadog-secret
 ```
 
 - `shellEnvVars` - an array of environment variables with a
@@ -38,13 +70,23 @@ standard output should be written.
 - `stderrField` - the path to the field where the shell
 standard error output should be written.
 
-## Practical Example: Obtain Dashboard Ids from Datadog
+## Examples
+
+This repository includes the following examples
+- echo
+- datadog-dashboard-ids
+- ip-addr-validation
+
+## Example: Obtain Dashboard Ids from Datadog
 
 The composition calls the `function-shell` instructing it to obtain dashboard
 ids from a [Datadog](https://www.datadoghq.com/) account.
-For this, the composition specifies the location
-of a Kubernetes secret where the `DATADOG_API_KEY` and `DATADOG_APP_KEY`
-environment variable values are stored. The Datadog API endpoint is passed
+For this, the composition specifies the name of a Kubernetes
+pod environment variable called `DATADOG_SECRET`. This environment
+variable was populated with the `JSON` of a Kubernetes datadog-secret
+through a deploymentRuntimeConfig. The `JSON` includes the
+`DATADOG_API_KEY` and `DATADOG_APP_KEY`
+keys and their values. The Datadog API endpoint is passed
 in a clear text `DATADOG_API_URL` environment variable. The shell command
 uses a `curl` to the endpoint with a header that contains the access
 credentials. The command output is piped into
@@ -55,24 +97,12 @@ specified output status field, and any output that went
 to stderr into the specified stderr status field.
 
 The composition is for illustration purposes only. When using the
-`function-shell` in your own compositions, you may want to patch function input
+`function-shell` in your own compositions,
+you may want to patch function input
 from claim and other composition field values.
 
-Note: `function-shell` requires permissions in form of a `rolebinding` to
-read secrets and perform other actions that may be prohibited by default. Below
-is a `clusterrolebinding` that will work, but you should exercise appropriate
-caution when setting function permissions.
-
-```shell
-#!/bin/bash
-NS="crossplane-system" # Replace with the namespace you use, e.g. upbound-system
-SA=$(kubectl -n ${NS} get sa -o name | grep function-shell | sed -e 's|serviceaccount\/|${NS}:|g')
-kubectl create clusterrolebinding function-shell-admin-binding \
-    --clusterrole cluster-admin \
-    --serviceaccount="${SA}"
-```
-
-The composition reads a datadog secret that looks like below.
+The `deploymentRuntimeConfig` reads a datadog secret
+that looks like below.
 Replace `YOUR_API_KEY` and `YOUR_APP_KEY` with your respective keys.
 
 ```json
@@ -96,28 +126,33 @@ spec:
   pipeline:
     - step: shell
       functionRef:
+        # When installed through a package manager, use
+        # name: crossplane-contrib-function-shell
         name: function-shell
       input:
         apiVersion: shell.fn.crossplane.io/v1beta1
         kind: Parameters
-        shellEnvVarsSecretRef:
-          name: datadog-secret
-          namespace: upbound-system
-          key: credentials
+        # Load shellEnvVarsRef from a Kubernetes secret
+        # through a deploymentRuntimeConfig into the
+        # function-shell pod.
+        shellEnvVarsRef:
+          name: DATADOG_SECRET
+          keys:
+            - DATADOG_API_KEY
+            - DATADOG_APP_KEY
         shellEnvVars:
           - key: DATADOG_API_URL
             value: "https://api.datadoghq.com/api/v1/dashboard"
         shellCommand: |
-            curl -X GET "${DATADOG_API_URL}" \
-              -H "Accept: application/json" \
-              -H "DD-API-KEY: ${DATADOG_API_KEY}" \
-              -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|\
-              jq '.dashboards[] .id';
+          curl -X GET "${DATADOG_API_URL}" \
+            -H "Accept: application/json" \
+            -H "DD-API-KEY: ${DATADOG_API_KEY}" \
+            -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|jq '.dashboards[] .id'
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr
 ```
 
-The composition is called through the following `claim`.
+The composition is selected through the following `XR`.
 
 ```yaml
 ---
@@ -128,8 +163,8 @@ metadata:
 spec: {}
 ```
 
-The API definition is as follows. Note that the API contains status fields that
-are populated by `function-shell`.
+The API definition is as follows. Note that the API
+contains status fields that are populated by `function-shell`.
 
 ```yaml
 apiVersion: apiextensions.crossplane.io/v1
@@ -168,10 +203,10 @@ The `crossplane beta trace` output after applying the in-cluster
 shell-claim.yaml is as follows:
 
 ```shell
-crossplane beta trace shell.upbound.io/shell-1
-NAME                      SYNCED   READY   STATUS
-Shell/shell-1 (default)   True     True    Available
-└─ XShell/shell-1-ttfbh   True     True    Available
+crossplane beta trace shell.upbound.io/datadog-dashboard-ids
+NAME                                    SYNCED   READY   STATUS
+Shell/datadog-dashboard-ids (default)   True     True    Available
+└─ XShell/datadog-dashboard-ids-cbb6x   True     True    Available
 ```
 
 The `XShell/shell-1-ttfbh` yaml output looks as per below. Notice the dashboard
@@ -179,31 +214,32 @@ ids in the `status.atFunction.shell.stdout` field, and the `curl` stderr output
 in the `status.atFunction.shell.stderr` field.
 
 ```yaml
+kubectl get XShell/datadog-dashboard-ids-cbb6x -o yaml
 apiVersion: upbound.io/v1alpha1
 kind: XShell
 metadata:
-  creationTimestamp: "2024-04-11T02:31:54Z"
+  creationTimestamp: "2024-04-24T04:15:53Z"
   finalizers:
   - composite.apiextensions.crossplane.io
-  generateName: shell-1-
-  generation: 17
+  generateName: datadog-dashboard-ids-
+  generation: 6
   labels:
-    crossplane.io/claim-name: shell-1
+    crossplane.io/claim-name: datadog-dashboard-ids
     crossplane.io/claim-namespace: default
-    crossplane.io/composite: shell-1-wjjs4
-  name: shell-1-wjjs4
-  resourceVersion: "2577566"
-  uid: 77d24f9f-96db-4758-9155-9364ad227d0a
+    crossplane.io/composite: datadog-dashboard-ids-cbb6x
+  name: datadog-dashboard-ids-cbb6x
+  resourceVersion: "167413"
+  uid: 601d3f66-80df-4f1a-8917-533ea05255cc
 spec:
   claimRef:
     apiVersion: upbound.io/v1alpha1
     kind: Shell
-    name: shell-1
+    name: datadog-dashboard-ids
     namespace: default
   compositionRef:
     name: shell.upbound.io
   compositionRevisionRef:
-    name: shell.upbound.io-2403237
+    name: shell.upbound.io-e981893
   compositionUpdatePolicy: Automatic
   resourceRefs: []
 status:
@@ -212,8 +248,8 @@ status:
       stderr: "% Total    % Received % Xferd  Average Speed   Time    Time     Time
         \ Current\n                                 Dload  Upload   Total   Spent
         \   Left  Speed\n\r  0     0    0     0    0     0      0      0 --:--:--
-        --:--:-- --:--:--     0\r100  4255  100  4255    0     0   8862      0 --:--:--
-        --:--:-- --:--:--  8864"
+        --:--:-- --:--:--     0\r100  4255  100  4255    0     0  10361      0 --:--:--
+        --:--:-- --:--:-- 10378"
       stdout: |-
         "vn4-agn-ftd"
         "9pt-bhb-uwj"
@@ -222,13 +258,12 @@ status:
         "ssx-sci-uvi"
         "3fd-h4e-7w6"
         "qth-94z-ip5"
-        Python
   conditions:
-  - lastTransitionTime: "2024-04-11T02:53:01Z"
+  - lastTransitionTime: "2024-04-24T04:20:09Z"
     reason: ReconcileSuccess
     status: "True"
     type: Synced
-  - lastTransitionTime: "2024-04-11T02:31:55Z"
+  - lastTransitionTime: "2024-04-24T04:15:54Z"
     reason: Available
     status: "True"
     type: Ready
