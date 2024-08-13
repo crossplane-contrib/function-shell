@@ -10,7 +10,7 @@ require (
 	github.com/crossplane/function-sdk-go v0.2.0
 	github.com/google/go-cmp v0.6.0
 	github.com/keegancsmith/shell v0.0.0-20160208231706-ccb53e0c7c5c
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.29.2
 	k8s.io/client-go v0.29.1
