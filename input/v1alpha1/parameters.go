@@ -45,8 +45,10 @@ type Parameters struct {
 }
 
 type ShellEnvVar struct {
-	Key   string `json:"key,omitempty"`
-	Value string `json:"value,omitempty"`
+	Key                          string `json:"key,omitempty"`
+	Value                        string `json:"value,omitempty"`
+	ValueFromCompositeField      string `json:"valueFromCompositeField,omitempty"`
+	ValueFromExtraResourcesField string `json:"valueFromExtraResourcesField,omitempty"`
 }
 
 type ShellEnvVarsRef struct {

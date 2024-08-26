@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
@@ -11,7 +12,6 @@ import (
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
-
 	"github.com/keegancsmith/shell"
 )
 
@@ -87,7 +87,24 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 
 	var shellEnvVars = make(map[string]string)
 	for _, envVar := range in.ShellEnvVars {
-		shellEnvVars[envVar.Key] = envVar.Value
+		if envVar.ValueFromCompositeField != "" {
+			envValue, err := oxr.Resource.GetValue(envVar.ValueFromCompositeField)
+			if err != nil {
+				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of valueFromCompositeField %s", envVar.ValueFromCompositeField))
+				return rsp, nil
+			}
+			shellEnvVars[envVar.Key] = fmt.Sprintf("%v", envValue)
+		}
+		if envVar.ValueFromExtraResourcesField != "" {
+			envValue, err := fromExtraResourceField(req, envVar.ValueFromExtraResourcesField)
+			if err != nil {
+				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of valueFromExtraResourcesField %s", envVar.ValueFromExtraResourcesField))
+				return rsp, nil
+			}
+			shellEnvVars[envVar.Key] = envValue
+		} else {
+			shellEnvVars[envVar.Key] = envVar.Value
+		}
 	}
 
 	if len(in.ShellEnvVarsRef.Keys) > 0 {
