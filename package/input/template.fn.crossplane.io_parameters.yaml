@@ -52,9 +52,7 @@ spec:
                   type: string
                 value:
                   type: string
-                valueFromCompositeFieldPath:
-                  type: string
-                valueFromExtraResourcesFieldPath:
+                valueRef:
                   type: string
               type: object
             type: array

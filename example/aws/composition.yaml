@@ -24,7 +24,7 @@ spec:
                 maxMatch: 1
                 minMatch: 1
                 matchLabels:
-                - key: crossplane.io/claim-namespace
+                - key: account
                   type: Value
                   value: demo
     - step: shell
@@ -35,9 +35,9 @@ spec:
         kind: Parameters
         shellEnvVars:
           - key: AWS_ROLE_ARN
-            value: arn:aws:iam::00000002:role/ProviderAWS
+            value: arn:aws:iam::00000001:role/Crossplane
           - key: AWS_ASSUME_ROLE_ARN
-            valueFromExtraResourcesField: "ProviderConfig[0].spec.assumeRoleChain[0].roleARN"
+            valueRef: "context[apiextensions.crossplane.io/extra-resources].ProviderConfig[0].spec.assumeRoleChain[0].roleARN"
         shellCommand: |
           ASSUME_ROLE_OUTPUT=$(aws sts assume-role --role-arn $AWS_ASSUME_ROLE_ARN --role-session-name "function-shell")
           export AWS_ACCESS_KEY_ID=$(echo $ASSUME_ROLE_OUTPUT | grep -o '"AccessKeyId": "[^"]*"' | cut -d'"' -f4)

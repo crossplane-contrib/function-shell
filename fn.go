@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
@@ -87,18 +86,10 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 
 	var shellEnvVars = make(map[string]string)
 	for _, envVar := range in.ShellEnvVars {
-		if envVar.ValueFromCompositeField != "" {
-			envValue, err := oxr.Resource.GetValue(envVar.ValueFromCompositeField)
+		if envVar.ValueRef != "" {
+			envValue, err := fromValueRef(req, envVar.ValueRef)
 			if err != nil {
-				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of valueFromCompositeField %s", envVar.ValueFromCompositeField))
-				return rsp, nil
-			}
-			shellEnvVars[envVar.Key] = fmt.Sprintf("%v", envValue)
-		}
-		if envVar.ValueFromExtraResourcesField != "" {
-			envValue, err := fromExtraResourceField(req, envVar.ValueFromExtraResourcesField)
-			if err != nil {
-				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of valueFromExtraResourcesField %s", envVar.ValueFromExtraResourcesField))
+				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of valueRef %s", envVar.ValueRef))
 				return rsp, nil
 			}
 			shellEnvVars[envVar.Key] = envValue

@@ -4,17 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-)
-
-const (
-	ExtraResourceFunctionContextKeyEnvironment = "apiextensions.crossplane.io/extra-resources"
 )
 
 func addShellEnvVarsFromRef(envVarsRef v1alpha1.ShellEnvVarsRef, shellEnvVars map[string]string) (map[string]string, error) {
@@ -30,18 +28,33 @@ func addShellEnvVarsFromRef(envVarsRef v1alpha1.ShellEnvVarsRef, shellEnvVars ma
 	return shellEnvVars, nil
 }
 
-func fromExtraResourceField(req *fnv1beta1.RunFunctionRequest, path string) (value string, err error) {
-	var extraResources *unstructured.Unstructured
-	if v, ok := request.GetContextKey(req, ExtraResourceFunctionContextKeyEnvironment); ok {
-		extraResources = &unstructured.Unstructured{}
-		if err = resource.AsObject(v.GetStructValue(), extraResources); err != nil {
-			return
+func fromValueRef(req *fnv1beta1.RunFunctionRequest, path string) (string, error) {
+	// Check for context key presence and capture context key and path
+	contextRegex := regexp.MustCompile(`^context\[(.+?)].(.+)$`)
+	if match := contextRegex.FindStringSubmatch(path); match != nil {
+		if v, ok := request.GetContextKey(req, match[1]); ok {
+			context := &unstructured.Unstructured{}
+			if err := resource.AsObject(v.GetStructValue(), context); err != nil {
+				return "", errors.Wrapf(err, "cannot convert context to %s", v)
+			}
+			value, err := fieldpath.Pave(context.Object).GetValue(match[2])
+			if err != nil {
+				return "", errors.Wrapf(err, "cannot get context value at %s", match[2])
+			}
+			return fmt.Sprintf("%v", value), nil
 		}
-		valueRaw, errValue := fieldpath.Pave(extraResources.Object).GetValue(path)
-		if errValue != nil {
-			return
+
+	} else {
+		oxr, err := request.GetObservedCompositeResource(req)
+		if err != nil {
+			return "", errors.Wrapf(err, "cannot get observed composite resource from %T", req)
 		}
-		return fmt.Sprintf("%v", valueRaw), nil
+		value, err := oxr.Resource.GetValue(path)
+		if err != nil {
+			return "", errors.Wrapf(err, "cannot get observed composite value at %s", path)
+		}
+		return fmt.Sprintf("%v", value), nil
+
 	}
-	return
+	return "", nil
 }
