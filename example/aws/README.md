@@ -156,12 +156,17 @@ the `ProviderConfig` are saved into the `ProviderConfig` key (set with `function
 
 For the function to be authenticated it first request a temporary token using:
 ```bash
-aws sts assume-role --role-arn $AWS_ASSUME_ROLE_ARN --role-session-name "function-shell"
+ASSUME_ROLE_OUTPUT=$(aws sts assume-role --role-arn $AWS_ASSUME_ROLE_ARN --role-session-name "function-shell")
 ```
 
-The environment variable `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` are set from the output
+The session name can be set to an arbitrary value; it enables keeping track of the service making the call.
 
-The sessions name can be set to an arbitrary value; it enables keeping track of the service making the call.
+The environment variable `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` are set from the output with:
+```bash
+export AWS_ACCESS_KEY_ID=$(echo $ASSUME_ROLE_OUTPUT | grep -o '"AccessKeyId": "[^"]*"' | cut -d'"' -f4)
+export AWS_SECRET_ACCESS_KEY=$(echo $ASSUME_ROLE_OUTPUT | grep -o '"SecretAccessKey": "[^"]*"' | cut -d'"' -f4)
+export AWS_SESSION_TOKEN=$(echo $ASSUME_ROLE_OUTPUT | grep -o '"SessionToken": "[^"]*"' | cut -d'"' -f4)
+```
 
 Finally, the AWS command is executed and filter with `jq` to retrieve the ARN of all the roles in the target account with:
 ```bash
