@@ -152,7 +152,7 @@ The **AWS_ASSUME_ROLE_ARN** is configured dynamically with `valueRef` with the f
 `context[apiextensions.crossplane.io/extra-resources].ProviderConfig[0].spec.assumeRoleChain[0].roleARN`
 
 The reference is retrieving from the context at the `apiextensions.crossplane.io/extra-resources`key. In the previous step
-the `ProviderConfig` are saved into the `ProviderConfig` key (set with `function-extra-resources` input spec.extraResources[0].into)
+the `ProviderConfig` are saved into the `ProviderConfig` key (set with `function-extra-resources` input `spec.extraResources[0].into`)
 
 For the function to be authenticated it first request a temporary token using:
 ```bash
