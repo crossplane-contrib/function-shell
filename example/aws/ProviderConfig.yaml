@@ -6,6 +6,6 @@ metadata:
   name: demo
 spec:
   assumeRoleChain:
-    - roleARN: arn:aws:iam::00000002:role/Crossplane
+    - roleARN: arn:aws:iam::000000000001:role/eks-test-assume-role
   credentials:
     source: IRSA

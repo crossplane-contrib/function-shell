@@ -35,7 +35,7 @@ spec:
         kind: Parameters
         shellEnvVars:
           - key: AWS_ROLE_ARN
-            value: arn:aws:iam::00000001:role/Crossplane
+            value: arn:aws:iam::000000000000:role/eks-test-role
           - key: AWS_ASSUME_ROLE_ARN
             valueRef: "context[apiextensions.crossplane.io/extra-resources].ProviderConfig[0].spec.assumeRoleChain[0].roleARN"
         shellCommand: |
@@ -43,6 +43,6 @@ spec:
           export AWS_ACCESS_KEY_ID=$(echo $ASSUME_ROLE_OUTPUT | grep -o '"AccessKeyId": "[^"]*"' | cut -d'"' -f4)
           export AWS_SECRET_ACCESS_KEY=$(echo $ASSUME_ROLE_OUTPUT | grep -o '"SecretAccessKey": "[^"]*"' | cut -d'"' -f4)
           export AWS_SESSION_TOKEN=$(echo $ASSUME_ROLE_OUTPUT | grep -o '"SessionToken": "[^"]*"' | cut -d'"' -f4)
-          aws eks list-clusters | jq -r '.clusters[0]'
+          aws iam list-roles | jq -r '.Roles[] .Arn'
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr
