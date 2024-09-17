@@ -1,6 +1,6 @@
 # Example - AWS
 
-This example demonstrates how to reuse an existing ProviderConfig to authenticate with AWS using IAM Role for
+This example demonstrates how to reuse an existing `ProviderConfig` to authenticate with AWS using IAM Role for
 ServiceAccount (IRSA) and execute a command on a different account using AssumeRole. This architecture is known as Hub
 and Spoke.
 
@@ -64,7 +64,7 @@ Example output:
 Define the trust policy to allow the Hub account (000000000000) to AssumeRole on the target account (000000000001).
 
 ```bash
-aws iam create-role --profile w3f-web3factory-demo \
+aws iam create-role \
     --role-name eks-test-assume-role \
     --assume-role-policy-document \
 '{
@@ -73,7 +73,7 @@ aws iam create-role --profile w3f-web3factory-demo \
         {
             "Effect": "Allow",
             "Principal": {
-                "AWS": "arn:aws:iam::000000000000:role/ProviderAWS"
+                "AWS": "arn:aws:iam::000000000000:role/eks-test-role"
             },
             "Action": "sts:AssumeRole",
             "Condition": {}
@@ -97,7 +97,7 @@ Example output:
                 {
                     "Effect": "Allow",
                     "Principal": {
-                        "AWS": "arn:aws:iam::000000000000:role/ProviderAWS"
+                        "AWS": "arn:aws:iam::000000000000:role/eks-test-role"
                     },
                     "Action": "sts:AssumeRole",
                     "Condition": {}
