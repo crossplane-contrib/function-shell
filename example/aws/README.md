@@ -114,7 +114,7 @@ Attach the IAMRoleLister policy on the role
 aws iam attach-role-policy \
     --policy-arn arn:aws:iam::000000000001:policy/IAMRoleLister \
     --role-name eks-test-assume-role
- ```
+```
 
 ## Usage
 
