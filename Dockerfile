@@ -10,13 +10,12 @@ ARG GO_VERSION=1
 # architecture that we're building the function for.
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS build
 
-RUN apt-get update && apt-get install -y coreutils jq unzip zsh
-RUN mkdir /scripts && chown 2000:2000 /scripts
+RUN apt-get update && apt-get install -y coreutils jq unzip zsh less
+RUN mkdir /scripts /.aws && chown 2000:2000 /scripts /.aws
 
-# TODO: Install awscli, gcloud
-# RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" && \
-#	unzip "/tmp/awscliv2.zip" && \
-#	./aws/install
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" && \
+	unzip "/tmp/awscliv2.zip" && \
+	./aws/install
 
 WORKDIR /fn
 
@@ -52,6 +51,7 @@ FROM gcr.io/distroless/python3-debian12 AS image
 
 WORKDIR /
 COPY --from=build --chown=2000:2000 /scripts /scripts
+COPY --from=build --chown=2000:2000 /.aws /.aws
 
 COPY --from=build /bin /bin
 COPY --from=build /etc /etc

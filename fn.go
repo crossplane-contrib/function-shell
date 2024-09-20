@@ -11,7 +11,6 @@ import (
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
-
 	"github.com/keegancsmith/shell"
 )
 
@@ -87,7 +86,16 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 
 	var shellEnvVars = make(map[string]string)
 	for _, envVar := range in.ShellEnvVars {
-		shellEnvVars[envVar.Key] = envVar.Value
+		if envVar.ValueRef != "" {
+			envValue, err := fromValueRef(req, envVar.ValueRef)
+			if err != nil {
+				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of valueRef %s", envVar.ValueRef))
+				return rsp, nil
+			}
+			shellEnvVars[envVar.Key] = envValue
+		} else {
+			shellEnvVars[envVar.Key] = envVar.Value
+		}
 	}
 
 	if len(in.ShellEnvVarsRef.Keys) > 0 {
