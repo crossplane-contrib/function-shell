@@ -2,7 +2,7 @@ module github.com/crossplane-contrib/function-shell
 
 go 1.21
 
-toolchain go1.21.3
+toolchain go1.23.4
 
 require (
 	github.com/alecthomas/kong v0.8.1
