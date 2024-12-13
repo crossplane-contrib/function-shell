@@ -16,6 +16,9 @@ RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologi
 RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws 
 
 
+# Download platform-specific AWS CLI binaries
+ARG TARGETPLATFORM
+
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
        echo "Installing aws-cli for linux/arm64" && \
        curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "/tmp/awscliv2.zip" && \
