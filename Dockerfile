@@ -10,8 +10,6 @@ ARG GO_VERSION=1
 # architecture that we're building the function for.
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS build
 
-RUN echo "Buildplatform: $BUILDPLATFORM"
-
 RUN apt-get update && apt-get install -y coreutils jq unzip zsh less
 RUN groupadd -g 65532 nonroot
 RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologin nonroot
