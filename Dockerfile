@@ -10,12 +10,25 @@ ARG GO_VERSION=1
 # architecture that we're building the function for.
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS build
 
-RUN apt-get update && apt-get install -y coreutils jq unzip zsh less
-RUN mkdir /scripts /.aws && chown 2000:2000 /scripts /.aws
+RUN echo "Buildplatform: $BUILDPLATFORM"
 
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" && \
-	unzip "/tmp/awscliv2.zip" && \
-	./aws/install
+RUN apt-get update && apt-get install -y coreutils jq unzip zsh less
+RUN groupadd -g 65532 nonroot
+RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologin nonroot
+RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws 
+
+
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+       echo "Installing aws-cli for linux/arm64" && \
+       curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "/tmp/awscliv2.zip" && \
+       unzip "/tmp/awscliv2.zip" && \
+       ./aws/install; \
+    else \
+       echo "Installing aws-cli for linux/x86_64" && \
+       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" && \
+       unzip "/tmp/awscliv2.zip" && \
+       ./aws/install; \
+    fi 
 
 WORKDIR /fn
 
@@ -50,8 +63,8 @@ RUN --mount=target=. \
 FROM gcr.io/distroless/python3-debian12 AS image
 
 WORKDIR /
-COPY --from=build --chown=2000:2000 /scripts /scripts
-COPY --from=build --chown=2000:2000 /.aws /.aws
+COPY --from=build --chown=65532:65532 /scripts /scripts
+COPY --from=build --chown=65532:65532 /.aws /.aws
 
 COPY --from=build /bin /bin
 COPY --from=build /etc /etc
