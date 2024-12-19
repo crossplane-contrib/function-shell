@@ -8,7 +8,7 @@ metadata:
     render.crossplane.io/runtime: Development
 spec:
   # This is ignored when using the Development runtime.
-  package: function-shell
+  package:   package: xpkg.upbound.io/crossplane-contrib/function-shell:v0.3.0
   packagePullPolicy: Always
   runtimeConfigRef:
     apiVersion: pkg.crossplane.io/v1beta1
