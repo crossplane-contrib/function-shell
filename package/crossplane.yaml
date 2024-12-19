@@ -4,7 +4,7 @@ kind: Function
 metadata:
   name: function-shell
   annotations:
-    meta.crossplane.io/maintainer: Crossplane Maintainers <info@c    rossplane.io>
+    meta.crossplane.io/maintainer: Crossplane Maintainers <info@crossplane.io>
     meta.crossplane.io/source: github.com/crossplane-contrib/function-shell
     meta.crossplane.io/license: Apache-2.0
     meta.crossplane.io/description: |
