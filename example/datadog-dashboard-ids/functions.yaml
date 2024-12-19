@@ -4,7 +4,7 @@ kind: Function
 metadata:
   name: function-shell
 spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-shell:v0.1.0
+  package: markussdocker/function-shell:v0.2.0
   packagePullPolicy: Always
   runtimeConfigRef:
     apiVersion: pkg.crossplane.io/v1beta1
