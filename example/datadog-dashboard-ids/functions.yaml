@@ -3,8 +3,12 @@ apiVersion: pkg.crossplane.io/v1beta1
 kind: Function
 metadata:
   name: function-shell
+  annotations:
+    # This tells crossplane beta render to connect to the functi    on locally.
+    render.crossplane.io/runtime: Development
 spec:
-  package: markussdocker/function-shell:v0.2.0
+  # This is ignored when using the Development runtime.
+  package: function-shell
   packagePullPolicy: Always
   runtimeConfigRef:
     apiVersion: pkg.crossplane.io/v1beta1
