@@ -2,16 +2,17 @@
 apiVersion: meta.pkg.crossplane.io/v1beta1
 kind: Function
 metadata:
-  name: function-shell
+  name: function-shell-idp
   annotations:
-    meta.crossplane.io/maintainer: Crossplane Maintainers <info@crossplane.io>
-    meta.crossplane.io/source: github.com/crossplane-contrib/function-shell
+    meta.crossplane.io/maintainer: Giant Swarm
+    meta.crossplane.io/source: github.com/giantswarm/function-shell-idp
     meta.crossplane.io/license: Apache-2.0
     meta.crossplane.io/description: |
       A Crossplane function for running shell commands. This function can be used to run any shell commands and receive the output of the commands in a status field.
     meta.crossplane.io/readme: |
+      A fork of the original function with custom tools.
       A function for running shell commands. Please see the [function-shell repository](https://github.com/crossplane-contrib/function-shell) for use case [examples](https://github.com/crossplane-contrib/function-shell/tree/main/example).
       Use cases include but are not limited to enumeration of observability dashboards, IAM roles, security groups, and other resources. When performing tasks that require role based authentication, please limit the function's permissions to the use case to reduce its attack surface.
 spec:
   crossplane:
-    version: ">=v1.14.0-up.1"
+    version: ">=v1.18.0"

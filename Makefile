@@ -1,22 +1,20 @@
-REPO_URL="xpkg.upbound.io/crossplane-contrib/function-shell"
+REPO_URL="gsoci.azurecr.io/giantswarm/function-shell-idp"
 VERSION_TAG="v0.1.0"
 
-#PACKAGE_FILES="function-amd64.xpkg,function-arm64.xpkg"
-PACKAGE_FILES="function-arm64.xpkg"
+PACKAGE_FILES="function-amd64.xpkg,function-arm64.xpkg"
 
 help:                   ## Print help for targets with comments
 			@printf "For more targets and info see comments in Makefile.\n\n"
 			@grep -E '^[a-zA-Z0-9._-]+:.*## .*$$' Makefile | sort | \
 				awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-#all:                    docker-build-amd64 docker-build-arm64 xpkg-build-amd64 xpkg-build-arm64 xpkg-push
-all:                    docker-build-amd64 docker-build-arm64 xpkg-build-arm64 xpkg-push
+all:                    docker-build-amd64 docker-build-arm64 xpkg-build-amd64 xpkg-build-arm64 xpkg-push
 
 docker-build-amd64:	## Build AMD64 Docker Image
-			docker build . --quiet --platform=linux/amd64 --tag=runtime-amd64
+			docker buildx build . --quiet --platform=linux/amd64 --tag=runtime-amd64 --load
 
 docker-build-arm64:	## Build ARM64 Docker Image
-			docker build . --quiet --platform=linux/arm64 --tag=runtime-arm64
+			docker buildx build . --quiet --platform=linux/arm64 --tag=runtime-arm64 --load
 
 xpkg-build-amd64:	## Build AMD64 Composition Function XPKG
 			crossplane xpkg build \

@@ -1,6 +1,0 @@
----
-apiVersion: upbound.io/v1alpha1
-kind: Shell
-metadata:
-  name: datadog-dashboard-ids
-spec: {}

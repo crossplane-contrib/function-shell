@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/function-sdk-go/resource"
+	"github.com/giantswarm/function-shell-idp/input/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 

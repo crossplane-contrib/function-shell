@@ -2,7 +2,7 @@
 
 # We use the latest Go 1.x version unless asked to use something else.
 # The GitHub Actions CI job sets this argument for a consistent Go version.
-ARG GO_VERSION=1
+ARG GO_VERSION=1.23
 
 # Setup the base environment. The BUILDPLATFORM is set automatically by Docker.
 # The --platform=${BUILDPLATFORM} flag tells Docker to build the function using
@@ -10,26 +10,8 @@ ARG GO_VERSION=1
 # architecture that we're building the function for.
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS build
 
-RUN apt-get update && apt-get install -y coreutils jq unzip zsh less
-RUN groupadd -g 65532 nonroot
-RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologin nonroot
-RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws 
-
-
 # Download platform-specific AWS CLI binaries
 ARG TARGETPLATFORM
-
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-       echo "Installing aws-cli for linux/arm64" && \
-       curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "/tmp/awscliv2.zip" && \
-       unzip "/tmp/awscliv2.zip" && \
-       ./aws/install; \
-    else \
-       echo "Installing aws-cli for linux/x86_64" && \
-       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" && \
-       unzip "/tmp/awscliv2.zip" && \
-       ./aws/install; \
-    fi 
 
 WORKDIR /fn
 
@@ -53,26 +35,40 @@ ARG TARGETARCH
 # current directory read-only in the WORKDIR. The type=cache mount tells Docker
 # to cache the Go modules cache across builds.
 RUN --mount=target=. \
-    --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /function .
+  --mount=type=cache,target=/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /function .
 
-# Produce the Function image. We use a very lightweight 'distroless'
-# Python3 image that includes useful commands but not build tools used
-# in previous stages.
-# FROM python:3.12
-FROM gcr.io/distroless/python3-debian12 AS image
+# Produce the Function image.
+FROM alpine:3.21.2 AS image
+
+ENV KUBECTL_VERSION=1.29.11
+ENV GH_CLI_VERSION=2.65.0
+ENV BOILERPLATE_VERSION=0.5.19
+ENV HELM_DOCS_VERSION=1.14.2
+
+RUN apk update && apk add --no-cache \
+  ca-certificates \
+  bash \
+  curl \
+  git \
+  jq \
+  pre-commit \
+  && rm -rf /var/cache/apk/*
+
+RUN curl -fsSL "https://dl.k8s.io/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl \
+  && curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.tar.gz" -o /tmp/gh.tar.gz \
+  && tar xzf /tmp/gh.tar.gz \
+  && chmod +x gh_${GH_CLI_VERSION}_linux_amd64/bin/gh \
+  && mv gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/ \
+  && rm /tmp/gh.tar.gz \
+  && rm -rf ./gh_${GH_CLI_VERSION}_linux_amd64 \
+  && curl -fsSL "https://github.com/gruntwork-io/boilerplate/releases/download/v${BOILERPLATE_VERSION}/boilerplate_linux_amd64" -o /usr/local/bin/boilerplate && chmod +x /usr/local/bin/boilerplate \
+  && curl -fsSL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz" -o /tmp/helm-docs.tar.gz && tar xzf /tmp/helm-docs.tar.gz && mv helm-docs /usr/local/bin/ && rm /tmp/helm-docs.tar.gz
 
 WORKDIR /
-COPY --from=build --chown=65532:65532 /scripts /scripts
-COPY --from=build --chown=65532:65532 /.aws /.aws
-
-COPY --from=build /bin /bin
-COPY --from=build /etc /etc
-COPY --from=build /lib /lib
-COPY --from=build /tmp /tmp
-COPY --from=build /usr /usr
 COPY --from=build /function /function
 EXPOSE 9443
+RUN addgroup -g 65532 nonroot && adduser -u 65532 -G nonroot -h /home/nonroot -S -D -s /usr/sbin/nologin nonroot
 USER nonroot:nonroot
 ENTRYPOINT ["/function"]

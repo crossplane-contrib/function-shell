@@ -1,4 +1,4 @@
-module github.com/crossplane-contrib/function-shell
+module github.com/giantswarm/function-shell-idp
 
 go 1.21
 

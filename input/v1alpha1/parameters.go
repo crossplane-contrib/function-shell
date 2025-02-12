@@ -1,6 +1,6 @@
 // Package v1alpha1 contains the input type for this Function
 // +kubebuilder:object:generate=true
-// +groupName=template.fn.crossplane.io
+// +groupName=shell.fn.crossplane.giantswarm.io
 // +versionName=v1alpha1
 package v1alpha1
 

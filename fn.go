@@ -5,12 +5,12 @@ import (
 	"context"
 	"strings"
 
-	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
+	"github.com/giantswarm/function-shell-idp/input/v1alpha1"
 	"github.com/keegancsmith/shell"
 )
 
@@ -84,7 +84,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		shellCmd = in.ShellCommandField
 	}
 
-	var shellEnvVars = make(map[string]string)
+	shellEnvVars := make(map[string]string)
 	for _, envVar := range in.ShellEnvVars {
 		if envVar.ValueRef != "" {
 			envValue, err := fromValueRef(req, envVar.ValueRef)
@@ -107,7 +107,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	}
 
 	var exportCmds string
-	//exportCmds = "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
+	// exportCmds = "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
 	for k, v := range shellEnvVars {
 		exportCmds = exportCmds + "export " + k + "=\"" + v + "\";"
 	}

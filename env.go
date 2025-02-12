@@ -6,12 +6,12 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
+	"github.com/giantswarm/function-shell-idp/input/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -43,7 +43,6 @@ func fromValueRef(req *fnv1beta1.RunFunctionRequest, path string) (string, error
 			}
 			return fmt.Sprintf("%v", value), nil
 		}
-
 	} else {
 		oxr, err := request.GetObservedCompositeResource(req)
 		if err != nil {
