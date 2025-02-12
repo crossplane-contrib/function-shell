@@ -31,7 +31,7 @@ env:
 
   # The package to push, without a version tag. The default matches GitHub. For
   # example xpkg.upbound.io/crossplane/function-template-go.
-  XPKG: gsoci.azurecr.io/giantswarm/${{ github.repository}}
+  XPKG: gsoci.azurecr.io/${{ github.repository}}
 
   # The package version to push. The default is 0.0.0-gitsha.
   XPKG_VERSION: ${{ inputs.version }}
@@ -143,11 +143,11 @@ jobs:
       - name: Setup the Crossplane CLI
         run: "curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh"
 
-      - name: Login to Upbound
+      - name: Login to ACR
         uses: docker/login-action@v3
         if: env.XPKG_ACCESS_ID != ''
         with:
-          registry: xpkg.upbound.io
+          registry: gsoci.azurecr.io
           username: ${{ env.XPKG_ACCESS_ID }}
           password: ${{ env.XPKG_TOKEN }}
 
