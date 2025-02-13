@@ -116,6 +116,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	if len(in.Shell) > 0 {
 		shell = in.Shell
 	}
+	log.Debug("Selected shell info", "shell", shell)
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("/bin/"+shell, "-c", exportCmds+shellCmd)
 	cmd.Stdout = &stdout

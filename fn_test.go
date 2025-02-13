@@ -244,6 +244,48 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
+		"ResponseIsBashShell": {
+			reason: "The Function should use bash when specified",
+			args: args{
+				req: &fnv1beta1.RunFunctionRequest{
+					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shell": "bash",
+						"shellCommand": "echo ${BASH}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1beta1.RunFunctionResponse{
+					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1beta1.State{
+						Composite: &fnv1beta1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"spec": {
+									"atFunction": {
+										"shell": {
+											"stdout": "/bin/bash"
+										}
+									}
+								},
+								"status": {
+									"atFunction": {
+										"shell": {
+											"stderr": ""
+										}
+									}
+								}
+							}`),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
