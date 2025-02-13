@@ -42,18 +42,28 @@ RUN --mount=target=. \
 # Produce the Function image.
 FROM alpine:3.21.2 AS image
 
+# renovate: datasource=github-tags depName=kubernetes/kubernetes
 ENV KUBECTL_VERSION=1.29.11
+# renovate: datasource=github-releases depName=cli/cli
 ENV GH_CLI_VERSION=2.65.0
+# renovate: datasource=github-releases depName=gruntwork-io/boilerplate
 ENV BOILERPLATE_VERSION=0.5.19
+# renovate: datasource=github-releases depName=norwoodj/helm-docs
 ENV HELM_DOCS_VERSION=1.14.2
 
+# renovate: datasource=repology depName=alpine_3_21/ca-certificates
+# renovate: datasource=repology depName=alpine_3_21/bash
+# renovate: datasource=repology depName=alpine_3_21/curl
+# renovate: datasource=repology depName=alpine_3_21/git
+# renovate: datasource=repology depName=alpine_3_21/jq
+# renovate: datasource=repology depName=alpine_3_21/pre-commit
 RUN apk update && apk add --no-cache \
-  ca-certificates \
-  bash \
-  curl \
-  git \
-  jq \
-  pre-commit \
+  ca-certificates=20241121-r1 \
+  bash=5.2.37-r0 \
+  curl=8.11.1-r1 \
+  git=2.47.2-r0 \
+  jq=1.7.1-r0 \
+  pre-commit=4.0.1-r0 \
   && rm -rf /var/cache/apk/*
 
 RUN curl -fsSL "https://dl.k8s.io/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl \
