@@ -126,7 +126,7 @@ func TestRunFunction(t *testing.T) {
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
-						"shellCommand": "set -euo pìpefail",
+						"shellCommand": "set -euo nocando",
 						"stdoutField": "status.atFunction.shell.stdout",
 						"stderrField": "status.atFunction.shell.stderr"
                     }`),
@@ -144,7 +144,7 @@ func TestRunFunction(t *testing.T) {
 									"atFunction": {
 										"shell": {
                                             "stdout": "",
-											"stderr": "/bin/sh: 1: set: Illegal option -o pìpefail"
+											"stderr": "/bin/sh: 1: set: Illegal option -o nocando"
 										}
 									}
 								}
@@ -154,7 +154,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1beta1.Result{
 						{
 							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd \"set -euo pìpefail\" for \"\" failed with : exit status 2",
+							Message:  "shellCmd \"set -euo nocando\" for \"\" failed with : exit status 2",
 						},
 					},
 				},

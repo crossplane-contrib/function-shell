@@ -21,6 +21,6 @@
 go.work
 
 kubeconfig
-function-shell
+function-shell-idp
 function-amd64.xpkg
 function-arm64.xpkg
