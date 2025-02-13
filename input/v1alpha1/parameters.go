@@ -27,6 +27,12 @@ type Parameters struct {
 	// +optional
 	ShellEnvVars []ShellEnvVar `json:"shellEnvVars,omitempty"`
 
+	// shell
+	// +optional
+	// +kubebuilder:default=bash
+	// +kubebuilder:validation:Enum=bash;dash;zsh
+	Shell string `json:"shell,omitempty"`
+
 	// shellCmd
 	// +optional
 	ShellCommand string `json:"shellCommand,omitempty"`

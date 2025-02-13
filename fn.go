@@ -112,8 +112,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		exportCmds = exportCmds + "export " + k + "=\"" + v + "\";"
 	}
 
+	shell := "sh"
+	if len(in.Shell) > 0 {
+		shell = in.Shell
+	}
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("/bin/sh", "-c", exportCmds+shellCmd)
+	cmd := exec.Command("/bin/"+shell, "-c", exportCmds+shellCmd)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
