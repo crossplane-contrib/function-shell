@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
@@ -118,25 +120,32 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	cmd := shell.Commandf(exportCmds + shellCmd)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	err = cmd.Run()
+
+	cmderr := cmd.Run()
+	sout := strings.TrimSpace(stdout.String())
+	serr := strings.TrimSpace(stderr.String())
+
+	log.Debug(shellCmd, "stdout", sout, "stderr", serr)
+
+	err = dxr.Resource.SetValue(stdoutField, sout)
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "shellCmd %s for %s failed", shellCmd, oxr.Resource.GetKind()))
+		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", stdoutField, sout, oxr.Resource.GetKind()))
 		return rsp, nil
 	}
-	out := strings.TrimSpace(stdout.String())
-	err = dxr.Resource.SetValue(stdoutField, out)
+
+	err = dxr.Resource.SetValue(stderrField, serr)
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", stdoutField, out, oxr.Resource.GetKind()))
-		return rsp, nil
-	}
-	err = dxr.Resource.SetValue(stderrField, strings.TrimSpace(stderr.String()))
-	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", stderrField, out, oxr.Resource.GetKind()))
-		return rsp, nil
+		response.Fatal(rsp, errors.Wrapf(err, "cannot set field %s to %s for %s", stderrField, serr, oxr.Resource.GetKind()))
 	}
 	if err := response.SetDesiredCompositeResource(rsp, dxr); err != nil {
 		response.Fatal(rsp, errors.Wrapf(err, "cannot set desired composite resources from %T", req))
-		return rsp, nil
+	}
+
+	if cmderr != nil {
+		if exiterr, ok := cmderr.(*exec.ExitError); ok {
+			msg := fmt.Sprintf("shellCmd %q for %q failed with %s", shellCmd, oxr.Resource.GetKind(), exiterr.Stderr)
+			response.Fatal(rsp, errors.Wrap(cmderr, msg))
+		}
 	}
 
 	return rsp, nil
