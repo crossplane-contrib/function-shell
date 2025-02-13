@@ -60,11 +60,15 @@ ENV HELM_DOCS_VERSION=1.14.2
 RUN apk update && apk add --no-cache \
   ca-certificates=20241121-r1 \
   bash=5.2.37-r0 \
+  dash-0.5.12-r2 \
+  zsh-5.9-r4 \
   curl=8.11.1-r1 \
   git=2.47.2-r0 \
   jq=1.7.1-r0 \
   pre-commit=4.0.1-r0 \
   && rm -rf /var/cache/apk/*
+
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 RUN curl -fsSL "https://dl.k8s.io/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl \
   && curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.tar.gz" -o /tmp/gh.tar.gz \
