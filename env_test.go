@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
+	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -13,7 +13,7 @@ import (
 func TestFromValueRef(t *testing.T) {
 
 	type args struct {
-		req  *fnv1beta1.RunFunctionRequest
+		req  *fnv1.RunFunctionRequest
 		path string
 	}
 
@@ -30,9 +30,9 @@ func TestFromValueRef(t *testing.T) {
 		"FromCompositeValid": {
 			reason: "If composite path is valid, it should be returned.",
 			args: args{
-				req: &fnv1beta1.RunFunctionRequest{
-					Observed: &fnv1beta1.State{
-						Composite: &fnv1beta1.Resource{
+				req: &fnv1.RunFunctionRequest{
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
 								"apiVersion": "",
 								"kind": "",
@@ -53,7 +53,7 @@ func TestFromValueRef(t *testing.T) {
 		"FromContextValid": {
 			reason: "If composite path is valid, it should be returned.",
 			args: args{
-				req: &fnv1beta1.RunFunctionRequest{
+				req: &fnv1.RunFunctionRequest{
 					Context: resource.MustStructJSON(`{
 						"apiextensions.crossplane.io/foo": {
 							"bar": "baz"

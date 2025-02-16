@@ -44,7 +44,7 @@ test:                   ## Run Code Tests
 			go test -v -cover .
 
 render:                 ## Render Examples, Requires make debug first
-			crossplane beta render \
+			crossplane \
 				example/echo/xr.yaml \
 				example/echo/composition.yaml \
 				example/echo/functions.yaml

@@ -4,13 +4,9 @@ kind: Function
 metadata:
   name: function-shell
   annotations:
-    # This tells crossplane beta render to connect to the functi    on locally.
+    # This tells crossplane render to connect to the function locally.
     render.crossplane.io/runtime: Development
 spec:
   # This is ignored when using the Development runtime.
-  package:   package: xpkg.upbound.io/crossplane-contrib/function-shell:v0.3.0
+  package: xpkg.upbound.io/crossplane-contrib/function-shell:v0.3.0
   packagePullPolicy: Always
-  runtimeConfigRef:
-    apiVersion: pkg.crossplane.io/v1beta1
-    kind: DeploymentRuntimeConfig
-    name: function-shell
