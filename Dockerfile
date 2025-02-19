@@ -62,7 +62,7 @@ RUN apk update && apk add --no-cache \
     bash=5.2.37-r0 \
     dash=0.5.12-r2 \
     zsh=5.9-r4 \
-    curl=8.11.1-r1 \
+    curl=8.12.1-r0 \
     git=2.47.2-r0 \
     jq=1.7.1-r0 \
     pre-commit=4.0.1-r0 \
