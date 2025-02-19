@@ -38,6 +38,14 @@ spec:
             type: string
           metadata:
             type: object
+          shell:
+            default: bash
+            description: shell
+            enum:
+            - bash
+            - dash
+            - zsh
+            type: string
           shellCommand:
             description: shellCmd
             type: string

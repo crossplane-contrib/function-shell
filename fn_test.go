@@ -126,7 +126,7 @@ func TestRunFunction(t *testing.T) {
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
-						"shellCommand": "set -euo pìpefail",
+						"shellCommand": "set -euo nocando",
 						"stdoutField": "status.atFunction.shell.stdout",
 						"stderrField": "status.atFunction.shell.stderr"
                     }`),
@@ -144,7 +144,7 @@ func TestRunFunction(t *testing.T) {
 									"atFunction": {
 										"shell": {
                                             "stdout": "",
-											"stderr": "/bin/sh: 1: set: Illegal option -o pìpefail"
+											"stderr": "/bin/sh: 1: set: Illegal option -o nocando"
 										}
 									}
 								}
@@ -154,7 +154,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1beta1.Result{
 						{
 							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd \"set -euo pìpefail\" for \"\" failed with : exit status 2",
+							Message:  "shellCmd \"set -euo nocando\" for \"\" failed with : exit status 2",
 						},
 					},
 				},
@@ -228,6 +228,48 @@ func TestRunFunction(t *testing.T) {
 									"atFunction": {
 										"shell": {
 											"stdout": "foo"
+										}
+									}
+								},
+								"status": {
+									"atFunction": {
+										"shell": {
+											"stderr": ""
+										}
+									}
+								}
+							}`),
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsBashShell": {
+			reason: "The Function should use bash when specified",
+			args: args{
+				req: &fnv1beta1.RunFunctionRequest{
+					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shell": "bash",
+						"shellCommand": "echo ${BASH}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1beta1.RunFunctionResponse{
+					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1beta1.State{
+						Composite: &fnv1beta1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"spec": {
+									"atFunction": {
+										"shell": {
+											"stdout": "/bin/bash"
 										}
 									}
 								},

@@ -13,7 +13,6 @@ import (
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
 	"github.com/giantswarm/function-shell-idp/input/v1alpha1"
-	"github.com/keegancsmith/shell"
 )
 
 // Function returns whatever response you ask it to.
@@ -109,15 +108,17 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	}
 
 	var exportCmds string
-	// exportCmds = "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
 	for k, v := range shellEnvVars {
 		exportCmds = exportCmds + "export " + k + "=\"" + v + "\";"
 	}
 
-	log.Info(shellCmd)
-
+	shell := "sh"
+	if len(in.Shell) > 0 {
+		shell = in.Shell
+	}
+	log.Debug("Selected shell info", "shell", shell)
 	var stdout, stderr bytes.Buffer
-	cmd := shell.Commandf(exportCmds + shellCmd)
+	cmd := exec.Command("/bin/"+shell, "-c", exportCmds+shellCmd)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 

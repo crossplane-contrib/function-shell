@@ -35,9 +35,9 @@ ARG TARGETARCH
 # current directory read-only in the WORKDIR. The type=cache mount tells Docker
 # to cache the Go modules cache across builds.
 RUN --mount=target=. \
-  --mount=type=cache,target=/go/pkg/mod \
-  --mount=type=cache,target=/root/.cache/go-build \
-  GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /function .
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /function .
 
 # Produce the Function image.
 FROM alpine:3.21.2 AS image
@@ -58,23 +58,28 @@ ENV HELM_DOCS_VERSION=1.14.2
 # renovate: datasource=repology depName=alpine_3_21/jq
 # renovate: datasource=repology depName=alpine_3_21/pre-commit
 RUN apk update && apk add --no-cache \
-  ca-certificates=20241121-r1 \
-  bash=5.2.37-r0 \
-  curl=8.11.1-r1 \
-  git=2.47.2-r0 \
-  jq=1.7.1-r0 \
-  pre-commit=4.0.1-r0 \
-  && rm -rf /var/cache/apk/*
+    ca-certificates=20241121-r1 \
+    bash=5.2.37-r0 \
+    dash=0.5.12-r2 \
+    zsh=5.9-r4 \
+    curl=8.11.1-r1 \
+    git=2.47.2-r0 \
+    jq=1.7.1-r0 \
+    pre-commit=4.0.1-r0 \
+    && rm -rf /var/cache/apk/*
+
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+ENV SHELL=/bin/bash
 
 RUN curl -fsSL "https://dl.k8s.io/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl \
-  && curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.tar.gz" -o /tmp/gh.tar.gz \
-  && tar xzf /tmp/gh.tar.gz \
-  && chmod +x gh_${GH_CLI_VERSION}_linux_amd64/bin/gh \
-  && mv gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/ \
-  && rm /tmp/gh.tar.gz \
-  && rm -rf ./gh_${GH_CLI_VERSION}_linux_amd64 \
-  && curl -fsSL "https://github.com/gruntwork-io/boilerplate/releases/download/v${BOILERPLATE_VERSION}/boilerplate_linux_amd64" -o /usr/local/bin/boilerplate && chmod +x /usr/local/bin/boilerplate \
-  && curl -fsSL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz" -o /tmp/helm-docs.tar.gz && tar xzf /tmp/helm-docs.tar.gz && mv helm-docs /usr/local/bin/ && rm /tmp/helm-docs.tar.gz
+    && curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.tar.gz" -o /tmp/gh.tar.gz \
+    && tar xzf /tmp/gh.tar.gz \
+    && chmod +x gh_${GH_CLI_VERSION}_linux_amd64/bin/gh \
+    && mv gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/ \
+    && rm /tmp/gh.tar.gz \
+    && rm -rf ./gh_${GH_CLI_VERSION}_linux_amd64 \
+    && curl -fsSL "https://github.com/gruntwork-io/boilerplate/releases/download/v${BOILERPLATE_VERSION}/boilerplate_linux_amd64" -o /usr/local/bin/boilerplate && chmod +x /usr/local/bin/boilerplate \
+    && curl -fsSL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz" -o /tmp/helm-docs.tar.gz && tar xzf /tmp/helm-docs.tar.gz && mv helm-docs /usr/local/bin/ && rm /tmp/helm-docs.tar.gz
 
 WORKDIR /
 COPY --from=build /function /function
