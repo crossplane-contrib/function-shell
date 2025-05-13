@@ -48,15 +48,13 @@ RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws
 
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
        echo "Installing aws-cli for linux/arm64" && \
-       curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "/tmp/awscliv2.zip" && \
-       unzip "/tmp/awscliv2.zip" && \
-       ./aws/install; \
+       curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "/tmp/awscliv2.zip"; \
     else \
        echo "Installing aws-cli for linux/x86_64" && \
-       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" && \
-       unzip "/tmp/awscliv2.zip" && \
-       ./aws/install; \
-    fi 
+       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"; \
+    fi && \
+    unzip "/tmp/awscliv2.zip" && \
+    ./aws/install
 
 WORKDIR /
 
