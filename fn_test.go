@@ -16,7 +16,6 @@ import (
 )
 
 func TestRunFunction(t *testing.T) {
-
 	type args struct {
 		ctx context.Context
 		req *fnv1beta1.RunFunctionRequest
@@ -119,6 +118,48 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
+		"ResponseIsErrorIfInvalidShellCommand": {
+			reason: "The function should write to the specified stderr when the shell command is invalid",
+			args: args{
+				req: &fnv1beta1.RunFunctionRequest{
+					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": "set -euo pìpefail",
+						"stdoutField": "status.atFunction.shell.stdout",
+						"stderrField": "status.atFunction.shell.stderr"
+                    }`),
+				},
+			},
+			want: want{
+				rsp: &fnv1beta1.RunFunctionResponse{
+					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1beta1.State{
+						Composite: &fnv1beta1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"status": {
+									"atFunction": {
+										"shell": {
+                                            "stdout": "",
+											"stderr": "/bin/sh: 1: set: Illegal option -o pìpefail"
+										}
+									}
+								}
+							}`),
+						},
+					},
+					Results: []*fnv1beta1.Result{
+						{
+							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
+							Message:  "shellCmd \"set -euo pìpefail\" for \"\" failed with : exit status 2",
+						},
+					},
+				},
+			},
+		},
 		"ResponseIsErrorWhenShellCommandNotFound": {
 			reason: "The Function should write to the specified stderr field when the shellCommand is not found",
 			args: args{
@@ -128,18 +169,34 @@ func TestRunFunction(t *testing.T) {
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellCommand": "unkown-shell-command",
-						"stdoutField": "spec.atFunction.shell.stdout",
-						"stderrField": "spec.atFunction.shell.stderr"
+						"stdoutField": "status.atFunction.shell.stdout",
+						"stderrField": "status.atFunction.shell.stderr"
 					}`),
 				},
 			},
 			want: want{
 				rsp: &fnv1beta1.RunFunctionResponse{
 					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1beta1.State{
+						Composite: &fnv1beta1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"status": {
+									"atFunction": {
+										"shell": {
+                                            "stdout": "",
+											"stderr": "/bin/sh: 1: unkown-shell-command: not found"
+										}
+									}
+								}
+							}`),
+						},
+					},
 					Results: []*fnv1beta1.Result{
 						{
 							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd unkown-shell-command for  failed: exit status 127",
+							Message:  "shellCmd \"unkown-shell-command\" for \"\" failed with : exit status 127",
 						},
 					},
 				},
