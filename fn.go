@@ -8,7 +8,7 @@ import (
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
+	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
 	"github.com/keegancsmith/shell"
@@ -16,13 +16,13 @@ import (
 
 // Function returns whatever response you ask it to.
 type Function struct {
-	fnv1beta1.UnimplementedFunctionRunnerServiceServer
+	fnv1.UnimplementedFunctionRunnerServiceServer
 
 	log logging.Logger
 }
 
 // RunFunction runs the Function.
-func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequest) (*fnv1beta1.RunFunctionResponse, error) {
+func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "tag", req.GetMeta().GetTag())
 
 	rsp := response.To(req, response.DefaultTTL)
@@ -98,11 +98,15 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		}
 	}
 
-	if len(in.ShellEnvVarsRef.Keys) > 0 {
-		shellEnvVars, err = addShellEnvVarsFromRef(in.ShellEnvVarsRef, shellEnvVars)
-		if err != nil {
-			response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of shellEnvVarsRef %s", in.ShellEnvVarsRef.Name))
-			return rsp, nil
+	if len(in.ShellCredentialRefs) > 0 {
+		for _, credRef := range in.ShellCredentialRefs {
+			if len(credRef.Keys) > 0 {
+				shellEnvVars, err = addShellEnvVarsFromCredentialRefs(req, credRef, shellEnvVars)
+				if err != nil {
+					response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of shellCredentialRefs %s", credRef.Name))
+					return rsp, nil
+				}
+			}
 		}
 	}
 

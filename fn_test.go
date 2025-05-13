@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
+	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/response"
 )
@@ -19,10 +19,10 @@ func TestRunFunction(t *testing.T) {
 
 	type args struct {
 		ctx context.Context
-		req *fnv1beta1.RunFunctionRequest
+		req *fnv1.RunFunctionRequest
 	}
 	type want struct {
-		rsp *fnv1beta1.RunFunctionResponse
+		rsp *fnv1.RunFunctionResponse
 		err error
 	}
 
@@ -34,8 +34,8 @@ func TestRunFunction(t *testing.T) {
 		"ResponseIsParametersRequired": {
 			reason: "The Function should return a fatal result if no input was specified",
 			args: args{
-				req: &fnv1beta1.RunFunctionRequest{
-					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters"
@@ -43,12 +43,13 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 			want: want{
-				rsp: &fnv1beta1.RunFunctionResponse{
-					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
-					Results: []*fnv1beta1.Result{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{
 						{
-							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
+							Severity: fnv1.Severity_SEVERITY_FATAL,
 							Message:  "invalid Function input: parameters: Required value: one of ShellCommand or ShellCommandField is required",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
 				},
@@ -57,8 +58,8 @@ func TestRunFunction(t *testing.T) {
 		"ResponseIsEmptyShellCommand": {
 			reason: "The Function should return a response when after a script is run",
 			args: args{
-				req: &fnv1beta1.RunFunctionRequest{
-					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -67,12 +68,13 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 			want: want{
-				rsp: &fnv1beta1.RunFunctionResponse{
-					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
-					Results: []*fnv1beta1.Result{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{
 						{
-							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
+							Severity: fnv1.Severity_SEVERITY_FATAL,
 							Message:  "invalid Function input: parameters: Required value: one of ShellCommand or ShellCommandField is required",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
 				},
@@ -81,8 +83,8 @@ func TestRunFunction(t *testing.T) {
 		"ResponseIsEcho": {
 			reason: "The Function should write stdout to the specified field",
 			args: args{
-				req: &fnv1beta1.RunFunctionRequest{
-					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -92,10 +94,10 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 			want: want{
-				rsp: &fnv1beta1.RunFunctionResponse{
-					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
-					Desired: &fnv1beta1.State{
-						Composite: &fnv1beta1.Resource{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1.State{
+						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
 								"apiVersion": "",
 								"kind": "",
@@ -122,8 +124,8 @@ func TestRunFunction(t *testing.T) {
 		"ResponseIsErrorWhenShellCommandNotFound": {
 			reason: "The Function should write to the specified stderr field when the shellCommand is not found",
 			args: args{
-				req: &fnv1beta1.RunFunctionRequest{
-					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -134,12 +136,13 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 			want: want{
-				rsp: &fnv1beta1.RunFunctionResponse{
-					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
-					Results: []*fnv1beta1.Result{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{
 						{
-							Severity: fnv1beta1.Severity_SEVERITY_FATAL,
+							Severity: fnv1.Severity_SEVERITY_FATAL,
 							Message:  "shellCmd unkown-shell-command for  failed: exit status 127",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
 				},
@@ -148,8 +151,8 @@ func TestRunFunction(t *testing.T) {
 		"ResponseIsEchoEnvVar": {
 			reason: "The Function should accept and use environment variables",
 			args: args{
-				req: &fnv1beta1.RunFunctionRequest{
-					Meta: &fnv1beta1.RequestMeta{Tag: "hello"},
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -160,10 +163,10 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 			want: want{
-				rsp: &fnv1beta1.RunFunctionResponse{
-					Meta: &fnv1beta1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
-					Desired: &fnv1beta1.State{
-						Composite: &fnv1beta1.Resource{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1.State{
+						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
 								"apiVersion": "",
 								"kind": "",

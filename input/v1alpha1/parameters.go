@@ -19,9 +19,9 @@ type Parameters struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// shellEnvVarsRef
+	// shellCredentialRefs
 	// +optional
-	ShellEnvVarsRef ShellEnvVarsRef `json:"shellEnvVarsRef,omitempty"`
+	ShellCredentialRefs []ShellCredentialRef `json:"shellCredentialRefs,omitempty"`
 
 	// shellEnvVars
 	// +optional
@@ -44,15 +44,15 @@ type Parameters struct {
 	StderrField string `json:"stderrField,omitempty"`
 }
 
-type ShellEnvVar struct {
-	Key      string `json:"key,omitempty"`
-	Value    string `json:"value,omitempty"`
-	ValueRef string `json:"valueRef,omitempty"`
-}
-
-type ShellEnvVarsRef struct {
+type ShellCredentialRef struct {
 	// The Key whose value is the secret
 	Keys []string `json:"keys,omitempty"`
 	// Name of the enviroment variable
 	Name string `json:"name,omitempty"`
+}
+
+type ShellEnvVar struct {
+	Key      string `json:"key,omitempty"`
+	Value    string `json:"value,omitempty"`
+	ValueRef string `json:"valueRef,omitempty"`
 }

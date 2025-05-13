@@ -15,50 +15,8 @@ is expected to be enhanced with the above pattern.
 The `function-shell` accepts commands to run in a shell and it
 returns the output to specified fields. It accepts the following parameters:
 
-- `shellEnvVarsRef` - referencing environment variables in the
-function-shell Kubernetes pod that were loaded through a
-`deploymentRuntimeConfig`. The file MUST be in `JSON` format.
-It can be a Kubernetes secret. `shellEnvVarsRef` requires a `name`
-for the pod environment variable, and `keys` for the keys Inside
-of the JSON formatted pod environment variable that have associated
-values.
-
-Example secret:
-
-```json
-{
-    "ENV_FOO": "foo value",
-    "ENV_BAR": "bar value"
-}
-```
-
-Example `deploymentRuntimeConfig`:
-
-```yaml
----
-apiVersion: pkg.crossplane.io/v1beta1
-kind: DeploymentRuntimeConfig
-metadata:
-  name: function-shell
-spec:
-  deploymentTemplate:
-    spec:
-      selector: {}
-      replicas: 1
-      template:
-        spec:
-          containers:
-            - name: package-runtime
-              args:
-                - --debug
-              env:
-                - name: DATADOG_SECRET
-                  valueFrom:
-                    secretKeyRef:
-                      key: credentials
-                      name: datadog-secret
-```
-
+- `shellCredentialRefs` - referencing function credentials 
+and the required keys.
 - `shellEnvVars` - an array of environment variables with a
 `key` and `value` each.
 - `shellCommand` - a shell command line that can contain pipes
@@ -81,12 +39,9 @@ This repository includes the following examples
 
 The composition calls the `function-shell` instructing it to obtain dashboard
 ids from a [Datadog](https://www.datadoghq.com/) account.
-For this, the composition specifies the name of a Kubernetes
-pod environment variable called `DATADOG_SECRET`. This environment
-variable was populated with the `JSON` of a Kubernetes datadog-secret
-through a deploymentRuntimeConfig. The `JSON` includes the
-`DATADOG_API_KEY` and `DATADOG_APP_KEY`
-keys and their values. The Datadog API endpoint is passed
+For this, the composition specifies the name of a function credential called
+`DATADOG_SECRET` referencing a Kubernetes secret containing `DATADOG_API_KEY`
+and `DATADOG_APP_KEY` keys and their values. The Datadog API endpoint is passed
 in a clear text `DATADOG_API_URL` environment variable. The shell command
 uses a `curl` to the endpoint with a header that contains the access
 credentials. The command output is piped into
@@ -101,15 +56,18 @@ The composition is for illustration purposes only. When using the
 you may want to patch function input
 from claim and other composition field values.
 
-The `deploymentRuntimeConfig` reads a datadog secret
-that looks like below.
 Replace `YOUR_API_KEY` and `YOUR_APP_KEY` with your respective keys.
 
-```json
-{
-    "DATADOG_API_KEY": "YOUR_API_KEY",
-    "DATADOG_APP_KEY": "YOIR_APP_KEY"
-}
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: datadog-secret
+  namespace: default
+type: Opaque
+data:
+  DATADOG_API_KEY: Zm9v # your api key
+  DATADOG_APP_KEY: YmFy # your app key
 ```
 
 ```yaml
@@ -125,6 +83,12 @@ spec:
   mode: Pipeline
   pipeline:
     - step: shell
+      credentials:
+        - name: DATADOG_SECRET
+          secretRef:
+            namespace: default
+            name: datadog-secret
+          source: Secret
       functionRef:
         # When installed through a package manager, use
         # name: crossplane-contrib-function-shell
@@ -132,14 +96,13 @@ spec:
       input:
         apiVersion: shell.fn.crossplane.io/v1beta1
         kind: Parameters
-        # Load shellEnvVarsRef from a Kubernetes secret
-        # through a deploymentRuntimeConfig into the
-        # function-shell pod.
-        shellEnvVarsRef:
-          name: DATADOG_SECRET
-          keys:
-            - DATADOG_API_KEY
-            - DATADOG_APP_KEY
+        # Load shellCredentialsRef from a Kubernetes secret
+        # into the function-shell pod.
+        shellCredentialRefs:
+          - name: DATADOG_SECRET
+            keys:
+              - DATADOG_API_KEY
+              - DATADOG_APP_KEY
         shellEnvVars:
           - key: DATADOG_API_URL
             value: "https://api.datadoghq.com/api/v1/dashboard"
@@ -296,7 +259,7 @@ go run . --insecure --debug
 In Terminal 2
 
 ```shell
-crossplane beta render \
+crossplane \
     example/out-of-cluster/xr.yaml \
     example/out-of-cluster/composition.yaml \
     example/out-of-cluster/functions.yaml

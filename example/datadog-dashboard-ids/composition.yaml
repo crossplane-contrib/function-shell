@@ -10,6 +10,12 @@ spec:
   mode: Pipeline
   pipeline:
     - step: shell
+      credentials:
+        - name: DATADOG_SECRET
+          secretRef:
+            namespace: default
+            name: datadog-secret
+          source: Secret
       functionRef:
         # When installed through a package manager, use
         # name: crossplane-contrib-function-shell
@@ -17,21 +23,17 @@ spec:
       input:
         apiVersion: shell.fn.crossplane.io/v1beta1
         kind: Parameters
-        # Load shellEnvVarsRef from a Kubernetes secret
-        # through a deploymentRuntimeConfig into the
-        # function-shell pod.
-        shellEnvVarsRef:
-          name: DATADOG_SECRET
-          keys:
-            - DATADOG_API_KEY
-            - DATADOG_APP_KEY
+        # Load shellCredentialsRef from a Kubernetes secret
+        # into the function-shell pod.
+        shellCredentialRefs:
+          - name: DATADOG_SECRET
+            keys:
+              - credentials
         shellEnvVars:
           - key: DATADOG_API_URL
             value: "https://api.datadoghq.com/api/v1/dashboard"
         shellCommand: |
-          curl -X GET "${DATADOG_API_URL}" \
-            -H "Accept: application/json" \
-            -H "DD-API-KEY: ${DATADOG_API_KEY}" \
-            -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}"|jq '.dashboards[] .id'
+          echo "url=${DATADOG_API_URL}"
+          echo "credentials=$(echo ${credentials})"
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr
