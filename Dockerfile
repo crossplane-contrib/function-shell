@@ -10,8 +10,6 @@ ARG GO_VERSION=1
 # architecture that we're building the function for.
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS build
 
-# Download platform-specific AWS CLI binaries
-ARG TARGETPLATFORM
 
 WORKDIR /fn
 
@@ -45,6 +43,9 @@ RUN apt-get update && apt-get install -y coreutils curl jq unzip zsh less
 RUN groupadd -g 65532 nonroot
 RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologin nonroot
 RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws 
+
+# Download platform-specific AWS CLI binaries
+ARG TARGETPLATFORM
 
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
        echo "Installing aws-cli for linux/arm64" && \
