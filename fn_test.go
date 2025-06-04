@@ -129,7 +129,7 @@ func TestRunFunction(t *testing.T) {
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
-						"shellCommand": "unkown-shell-command",
+						"shellCommand": "unknown-shell-command",
 						"stdoutField": "spec.atFunction.shell.stdout",
 						"stderrField": "spec.atFunction.shell.stderr"
 					}`),
@@ -141,7 +141,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd unkown-shell-command for  failed: exit status 127",
+							Message:  "shellCmd unknown-shell-command for  failed with error: /bin/sh: unknown-shell-command: command not found\n: exit status 127",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
