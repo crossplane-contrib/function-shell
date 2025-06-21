@@ -14,4 +14,4 @@ kind: Function
 metadata:
   name: function-extra-resources
 spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-extra-resources:v0.0.3
+  package: xpkg.upbound.io/crossplane-contrib/function-extra-resources:v0.1.0
