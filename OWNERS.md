@@ -12,7 +12,7 @@ repository maintainers in their own `OWNERS.md` file.
 
 ## Maintainers
 
-* Steven Borrelli <steven@upbound.io> ([stevenborrelli](https://github.com/stevenborrelli))
+* Steven Borrelli <steven@upbound.io> ([stevendborrelli](https://github.com/stevendborrelli))
 * Markus Schweig <markus.schweig@upbound.io> ([humoflife](https://github.com/humoflife))
 * Jason Tang <jasont@upbound.io> ([jastang](https://github.com/jastang))
 
