@@ -1,0 +1,18 @@
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-shell
+#  annotations:
+#    # This tells crossplane beta render to connect to the function locally.
+#    render.crossplane.io/runtime: Development
+spec:
+  # This is ignored when using the Development runtime.
+  #package: xpkg.upbound.io/crossplane-contrib/function-shell:v0.3.0
+  package: index.docker.io/steve/function-shell:v0.3.0-bookworm-2
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-extra-resources
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-extra-resources:v0.0.3
