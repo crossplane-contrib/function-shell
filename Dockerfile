@@ -38,7 +38,7 @@ RUN --mount=target=. \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /function .
 
 # Produce the Function image.
-FROM --platform=${BUILDPLATFORM} python:3.13-bookworm AS image 
+FROM python:3.13-bookworm as image
 RUN apt-get update && apt-get install -y coreutils curl jq unzip zsh less
 RUN groupadd -g 65532 nonroot
 RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologin nonroot
