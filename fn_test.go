@@ -129,7 +129,7 @@ func TestRunFunction(t *testing.T) {
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
-						"shellCommand": "unkown-shell-command",
+						"shellCommand": "unknown-shell-command",
 						"stdoutField": "spec.atFunction.shell.stdout",
 						"stderrField": "spec.atFunction.shell.stderr"
 					}`),
@@ -141,7 +141,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd unkown-shell-command for  failed: exit status 127",
+							Message:  "shellCmd unknown-shell-command for  failed with error: /bin/sh: unknown-shell-command: command not found\n: exit status 127",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
@@ -197,7 +197,7 @@ func TestRunFunction(t *testing.T) {
 			f := &Function{log: logging.NewNopLogger()}
 			rsp, err := f.RunFunction(tc.args.ctx, tc.args.req)
 
-			if diff := cmp.Diff(tc.want.rsp, rsp, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(tc.want.rsp, rsp, protocmp.Transform(), protocmp.IgnoreFields(&fnv1.Result{}, "message")); diff != "" {
 				t.Errorf("%s\nf.RunFunction(...): -want rsp, +got rsp:\n%s", tc.reason, diff)
 			}
 

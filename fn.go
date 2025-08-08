@@ -120,7 +120,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	cmd.Stderr = &stderr
 	err = cmd.Run()
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "shellCmd %s for %s failed", shellCmd, oxr.Resource.GetKind()))
+		response.Fatal(rsp, errors.Wrapf(err, "shellCmd %s for %s failed with error: %s", shellCmd, oxr.Resource.GetKind(), stderr.String()))
 		return rsp, nil
 	}
 	out := strings.TrimSpace(stdout.String())
