@@ -197,7 +197,7 @@ func TestRunFunction(t *testing.T) {
 			f := &Function{log: logging.NewNopLogger()}
 			rsp, err := f.RunFunction(tc.args.ctx, tc.args.req)
 
-			if diff := cmp.Diff(tc.want.rsp, rsp, protocmp.Transform(), cmpopts.IgnoreFields(fnv1.Result{}, "Message")); diff != "" {
+			if diff := cmp.Diff(tc.want.rsp, rsp, protocmp.Transform(), protocmp.IgnoreFields(&fnv1.Result{}, "message")); diff != "" {
 				t.Errorf("%s\nf.RunFunction(...): -want rsp, +got rsp:\n%s", tc.reason, diff)
 			}
 
