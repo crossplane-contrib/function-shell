@@ -43,7 +43,9 @@ type Parameters struct {
 	// +optional
 	StderrField string `json:"stderrField,omitempty"`
 
-	// TTL for response cache. Defaults to 1m
+	// TTL for response cache. Function Response caching is an
+	// alpha feature in Crossplane can be deprecated or changed
+	// in the future.
 	// +optional
 	// +kubebuilder:default:="1m"
 	CacheTTL string `json:"cacheTTL,omitempty"`
