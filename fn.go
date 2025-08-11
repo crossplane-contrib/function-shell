@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"strings"
+	"time"
 
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
@@ -12,6 +13,7 @@ import (
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
 	"github.com/keegancsmith/shell"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 // Function returns whatever response you ask it to.
@@ -31,6 +33,15 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	if err := request.GetInput(req, in); err != nil {
 		response.Fatal(rsp, errors.Wrapf(err, "cannot get Function from input"))
 		return rsp, nil
+	}
+
+	if in.CacheTTL != "" {
+		dur, err := time.ParseDuration(in.CacheTTL)
+		if err != nil {
+			response.Fatal(rsp, errors.Wrapf(err, "cannot set cacheTTL"))
+			return rsp, nil
+		}
+		rsp.Meta.Ttl = durationpb.New(dur)
 	}
 
 	oxr, err := request.GetObservedCompositeResource(req)
