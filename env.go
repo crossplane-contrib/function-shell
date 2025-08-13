@@ -28,10 +28,10 @@ func addShellEnvVarsFromRef(envVarsRef v1alpha1.ShellEnvVarsRef, shellEnvVars ma
 	return shellEnvVars, nil
 }
 
-func fromValueRef(req *fnv1.RunFunctionRequest, path string) (string, error) {
+func fromFieldRef(req *fnv1.RunFunctionRequest, fieldRef v1alpha1.FieldRef) (string, error) {
 	// Check for context key presence and capture context key and path
 	contextRegex := regexp.MustCompile(`^context\[(.+?)].(.+)$`)
-	if match := contextRegex.FindStringSubmatch(path); match != nil {
+	if match := contextRegex.FindStringSubmatch(fieldRef.Path); match != nil {
 		if v, ok := request.GetContextKey(req, match[1]); ok {
 			context := &unstructured.Unstructured{}
 			if err := resource.AsObject(v.GetStructValue(), context); err != nil {
@@ -39,7 +39,14 @@ func fromValueRef(req *fnv1.RunFunctionRequest, path string) (string, error) {
 			}
 			value, err := fieldpath.Pave(context.Object).GetValue(match[2])
 			if err != nil {
-				return "", errors.Wrapf(err, "cannot get context value at %s", match[2])
+				switch fieldRef.Policy {
+				case v1alpha1.FieldRefPolicyOptional:
+					return fieldRef.DefaultValue, nil
+				case v1alpha1.FieldRefPolicyRequired:
+					fallthrough
+				default:
+					return "", errors.Wrapf(err, "cannot get context value at %s", match[2])
+				}
 			}
 			return fmt.Sprintf("%v", value), nil
 		}
@@ -49,12 +56,28 @@ func fromValueRef(req *fnv1.RunFunctionRequest, path string) (string, error) {
 		if err != nil {
 			return "", errors.Wrapf(err, "cannot get observed composite resource from %T", req)
 		}
-		value, err := oxr.Resource.GetValue(path)
+		value, err := oxr.Resource.GetValue(fieldRef.Path)
 		if err != nil {
-			return "", errors.Wrapf(err, "cannot get observed composite value at %s", path)
+			switch fieldRef.Policy {
+			case v1alpha1.FieldRefPolicyOptional:
+				return fieldRef.DefaultValue, nil
+			case v1alpha1.FieldRefPolicyRequired:
+				fallthrough
+			default:
+				return "", errors.Wrapf(err, "cannot get observed composite value at %s", fieldRef.Path)
+			}
 		}
 		return fmt.Sprintf("%v", value), nil
 
 	}
-	return "", nil
+	return fieldRef.DefaultValue, nil
+}
+
+// a valueRef behaves like a fieldRef with a Required Policy
+func fromValueRef(req *fnv1.RunFunctionRequest, path string) (string, error) {
+	return fromFieldRef(
+		req, v1alpha1.FieldRef{
+			Path:   path,
+			Policy: v1alpha1.FieldRefPolicyRequired,
+		})
 }

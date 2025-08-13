@@ -19,6 +19,9 @@ type Parameters struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// FieldRef is a reference to a field in the Composition
+	FieldRef FieldRef `json:"fieldRef,omitempty"`
+
 	// shellEnvVarsRef
 	// +optional
 	ShellEnvVarsRef ShellEnvVarsRef `json:"shellEnvVarsRef,omitempty"`
@@ -55,4 +58,31 @@ type ShellEnvVarsRef struct {
 	Keys []string `json:"keys,omitempty"`
 	// Name of the enviroment variable
 	Name string `json:"name,omitempty"`
+}
+
+type FieldRefPolicy string
+
+// FieldRefPolicyOptional if the field is not available use the value of FieldRefDefault
+const FieldRefPolicyOptional = "Optional"
+
+// FieldRefPolicyRequired will error if the field is not available
+const FieldRefPolicyRequired = "Required"
+
+// FieldRefDefault optional value result returned for an Optional FieldRef. Defaults to an empty string
+
+const FieldRefDefault = ""
+
+type FieldRef struct {
+	// Path is the field path of the field being referenced, i.e. spec.myfield, status.output
+	Path string `json:"path"`
+	// Policy when the field is not available. If set to "Required" will return
+	// an error if a field is missing. If set to "Optional" will return DefaultValue.
+	// +optional
+	// +kubebuilder:default:=Required
+	// +kubebuilder:validation:Enum=Optional;Required
+	Policy FieldRefPolicy `json:"policy,omitempty"`
+	// DefaultValue when Policy is Optional and field is not available defaults to ""
+	// +optional
+	// +kbuebuilder:default:=""
+	DefaultValue string `json:"defaultValue,omitempty"`
 }
