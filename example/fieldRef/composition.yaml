@@ -1,0 +1,31 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: shell-example
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XR
+  mode: Pipeline
+  pipeline:
+    - step: shell
+      functionRef:
+        name: function-shell
+      input:
+        apiVersion: shell.fn.crossplane.io/v1alpha1
+        kind: Parameters
+        shellEnvVars:
+          - key: ECHO
+            fieldRef:
+              path: spec.field
+            type: FieldRef
+          - key: OPTIONAL
+            type: FieldRef
+            fieldRef:
+              path: spec.optional
+              policy: Optional
+              defaultValue: "Optional from Composition"
+        shellCommand: |
+           echo "${ECHO} ${OPTIONAL}"
+        stdoutField: status.atFunction.shell.stdout
+        stderrField: status.atFunction.shell.stderr
