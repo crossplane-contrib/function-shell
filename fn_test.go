@@ -129,7 +129,7 @@ func TestRunFunction(t *testing.T) {
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
-						"shellCommand": "unkown-shell-command",
+						"shellCommand": "unknown-shell-command",
 						"stdoutField": "spec.atFunction.shell.stdout",
 						"stderrField": "spec.atFunction.shell.stderr"
 					}`),
@@ -141,7 +141,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd unkown-shell-command for  failed: exit status 127",
+							Message:  "shellCmd unknown-shell-command for  failed: exit status 127",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
@@ -185,6 +185,155 @@ func TestRunFunction(t *testing.T) {
 									}
 								}
 							}`),
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsEchoShellEnvVarFieldPath": {
+			reason: "The Function should accept and use environment variables from a fieldPath",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellEnvVars": [{"key": "TEST_ENV_VAR", "fieldRef":{"path": "spec.foo", "policy": "Required"}, "type": "FieldRef"}],
+						"shellCommand": "echo ${TEST_ENV_VAR}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+					Observed: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"spec": {
+									"foo": "bar"
+								}
+							}`),
+						},
+					},
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"spec": {
+									"atFunction": {
+										"shell": {
+											"stdout": "bar"
+										}
+									}
+								},
+								"status": {
+									"atFunction": {
+										"shell": {
+											"stderr": ""
+										}
+									}
+								}
+							}`),
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsEchoEnvVarFieldRefDefaultValue": {
+			reason: "The Function should accept and use environment variables from a default FieldRef ",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellEnvVars": [{"key": "TEST_ENV_VAR", "fieldRef":{"path": "spec.bad", "policy": "Optional", "defaultValue": "default"}, "type": "FieldRef"}],
+						"shellCommand": "echo ${TEST_ENV_VAR}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"spec": {
+									"atFunction": {
+										"shell": {
+											"stdout": "default"
+										}
+									}
+								},
+								"status": {
+									"atFunction": {
+										"shell": {
+											"stderr": ""
+										}
+									}
+								}
+							}`),
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsErrorWhenBadShellEnvVarTypeIsProvided": {
+			reason: "The Function should return an error when a bad shellEnVars type is provided",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellEnvVars": [{"key": "TEST_ENV_VAR", "value": "foo", "type": "bad"}],
+						"shellCommand": "echo ${TEST_ENV_VAR}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{
+						{
+							Severity: fnv1.Severity_SEVERITY_FATAL,
+							Message:  "shellEnvVars: unknown type bad for key TEST_ENV_VAR",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
+						},
+					},
+				},
+			},
+		},
+		"ResponseIsErrorWhenShellEnvVarFieldPathIsEmpty": {
+			reason: "The Function should return an error when a shellEnvVars fieldRef.path is empty",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellEnvVars": [{"key": "TEST_ENV_VAR", "fieldRef":{"policy": "Optional", "defaultValue": "default"}, "type": "FieldRef"}],
+						"shellCommand": "echo ${TEST_ENV_VAR}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{
+						{
+							Severity: fnv1.Severity_SEVERITY_FATAL,
+							Message:  "cannot process contents of fieldRef : path must be set",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
 				},
