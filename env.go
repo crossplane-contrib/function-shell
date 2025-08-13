@@ -29,6 +29,9 @@ func addShellEnvVarsFromRef(envVarsRef v1alpha1.ShellEnvVarsRef, shellEnvVars ma
 }
 
 func fromFieldRef(req *fnv1.RunFunctionRequest, fieldRef v1alpha1.FieldRef) (string, error) {
+	if fieldRef.Path == "" {
+		return "", errors.New("path must be set")
+	}
 	// Check for context key presence and capture context key and path
 	contextRegex := regexp.MustCompile(`^context\[(.+?)].(.+)$`)
 	if match := contextRegex.FindStringSubmatch(fieldRef.Path); match != nil {
