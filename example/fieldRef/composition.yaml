@@ -24,8 +24,17 @@ spec:
             fieldRef:
               path: spec.optional
               policy: Optional
-              defaultValue: "Optional from Composition"
+              defaultValue: "defaultValue from Composition"
+          - key: FN_STDOUT
+            type: FieldRef
+            fieldRef:
+              path: status.atFunction.shell.stdout
+              policy: Optional
+              defaultValue: ""
         shellCommand: |
-           echo "${ECHO} ${OPTIONAL}"
+           echo "echo: ${ECHO} optional: ${OPTIONAL}" &&
+           if [ "$FN_STDOUT" != "" ]; then
+             echo "status.atFunction.shell.stdout" is populated
+           fi
         stdoutField: status.atFunction.shell.stdout
         stderrField: status.atFunction.shell.stderr
