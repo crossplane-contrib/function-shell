@@ -70,9 +70,37 @@ standard output should be written.
 - `stderrField` - the path to the field where the shell
 standard error output should be written.
 
+## Caching Function Outputs
+
+In Crossplane 1.20.0 and 2.0.0, Function Response Caching was added
+as an alpha feature. Crossplane will cache the results of a function invocation
+until a Time-To-Live (TTL) has been exceeded. This can significantly reduce
+the number of times the function is called.
+
+To enable Function Response Caching, update the crossplane deployment by adding `--enable-function-response-cache` to the `args` of the Crossplane deployment.
+
+Next, set the `cacheTTL`, using a time duration like `90s`, `5m`, or `4h30m`:
+
+```yaml
+input:
+  apiVersion: shell.fn.crossplane.io/v1alpha1
+  kind: Parameters
+  cacheTTL: 5m
+  shellEnvVars:
+    - key: ECHO
+      value: "SGVsbG8gZnJvbSBzaGVsbAo="
+  shellCommand: |
+      echo ${ECHO}|base64 -d|sed s/^h/H/
+  stdoutField: status.atFunction.shell.stdout
+  stderrField: status.atFunction.shell.stderr
+```
+
+See the echo [composition.yaml](example/echo/composition.yaml) for an example.
+
 ## Examples
 
-This repository includes the following examples
+This repository includes the following examples:
+
 - echo
 - datadog-dashboard-ids
 - ip-addr-validation

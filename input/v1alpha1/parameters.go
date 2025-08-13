@@ -42,6 +42,13 @@ type Parameters struct {
 	// stderrField
 	// +optional
 	StderrField string `json:"stderrField,omitempty"`
+
+	// TTL for response cache. Function Response caching is an
+	// alpha feature in Crossplane can be deprecated or changed
+	// in the future.
+	// +optional
+	// +kubebuilder:default:="1m"
+	CacheTTL string `json:"cacheTTL,omitempty"`
 }
 
 type ShellEnvVar struct {
@@ -53,6 +60,6 @@ type ShellEnvVar struct {
 type ShellEnvVarsRef struct {
 	// The Key whose value is the secret
 	Keys []string `json:"keys,omitempty"`
-	// Name of the enviroment variable
+	// Name of the environment variable
 	Name string `json:"name,omitempty"`
 }
