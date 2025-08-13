@@ -19,9 +19,6 @@ type Parameters struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// FieldRef is a reference to a field in the Composition
-	FieldRef FieldRef `json:"fieldRef,omitempty"`
-
 	// shellEnvVarsRef
 	// +optional
 	ShellEnvVarsRef ShellEnvVarsRef `json:"shellEnvVarsRef,omitempty"`
@@ -47,10 +44,38 @@ type Parameters struct {
 	StderrField string `json:"stderrField,omitempty"`
 }
 
+// ShellEnvVarType is a type of ShellEnvVar
+type ShellEnvVarType string
+
+const (
+	ShellEnvVarTypeFieldRef ShellEnvVarType = "FieldRef"
+	ShellEnvVarTypeValue    ShellEnvVarType = "Value"
+	ShellEnvVarTypeValueRef ShellEnvVarType = "ValueRef"
+)
+
 type ShellEnvVar struct {
 	Key      string `json:"key,omitempty"`
 	Value    string `json:"value,omitempty"`
 	ValueRef string `json:"valueRef,omitempty"`
+	// FieldRef is a reference to a field in the Composition
+	FieldRef *FieldRef       `json:"fieldRef,omitempty"`
+	Type     ShellEnvVarType `json:"type,omitempty"`
+}
+
+// GetType determines the ShellEnvVar type
+func (sev *ShellEnvVar) GetType() ShellEnvVarType {
+	if sev.Type == "" {
+		if sev.Value != "" {
+			return ShellEnvVarTypeValue
+		}
+		if sev.ValueRef != "" {
+			return ShellEnvVarTypeValueRef
+		}
+		if sev.FieldRef != nil {
+			return ShellEnvVarTypeFieldRef
+		}
+	}
+	return sev.Type
 }
 
 type ShellEnvVarsRef struct {
@@ -60,6 +85,7 @@ type ShellEnvVarsRef struct {
 	Name string `json:"name,omitempty"`
 }
 
+// FieldRefPolicy is a field path Policy
 type FieldRefPolicy string
 
 // FieldRefPolicyOptional if the field is not available use the value of FieldRefDefault
@@ -69,7 +95,6 @@ const FieldRefPolicyOptional = "Optional"
 const FieldRefPolicyRequired = "Required"
 
 // FieldRefDefault optional value result returned for an Optional FieldRef. Defaults to an empty string
-
 const FieldRefDefault = ""
 
 type FieldRef struct {
