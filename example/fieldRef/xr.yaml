@@ -1,0 +1,9 @@
+---
+apiVersion: example.crossplane.io/v1
+kind: XR
+metadata:
+  name: example-echo
+spec:
+  field: "hello from the XR"
+  # Uncomment to test
+  # optional: "optional from the XR"
