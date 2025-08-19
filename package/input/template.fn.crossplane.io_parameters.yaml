@@ -55,7 +55,33 @@ spec:
             description: shellEnvVars
             items:
               properties:
+                fieldRef:
+                  description: FieldRef is a reference to a field in the Composition
+                  properties:
+                    defaultValue:
+                      description: DefaultValue when Policy is Optional and field
+                        is not available defaults to ""
+                      type: string
+                    path:
+                      description: Path is the field path of the field being referenced,
+                        i.e. spec.myfield, status.output
+                      type: string
+                    policy:
+                      default: Required
+                      description: |-
+                        Policy when the field is not available. If set to "Required" will return
+                        an error if a field is missing. If set to "Optional" will return DefaultValue.
+                      enum:
+                      - Optional
+                      - Required
+                      type: string
+                  required:
+                  - path
+                  type: object
                 key:
+                  type: string
+                type:
+                  description: ShellEnvVarType is a type of ShellEnvVar
                   type: string
                 value:
                   type: string

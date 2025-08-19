@@ -97,15 +97,26 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 	var shellEnvVars = make(map[string]string)
 	for _, envVar := range in.ShellEnvVars {
-		if envVar.ValueRef != "" {
+		switch t := envVar.GetType(); t {
+		case v1alpha1.ShellEnvVarTypeValue:
+			shellEnvVars[envVar.Key] = envVar.Value
+		case v1alpha1.ShellEnvVarTypeValueRef:
 			envValue, err := fromValueRef(req, envVar.ValueRef)
 			if err != nil {
 				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of valueRef %s", envVar.ValueRef))
 				return rsp, nil
 			}
 			shellEnvVars[envVar.Key] = envValue
-		} else {
-			shellEnvVars[envVar.Key] = envVar.Value
+		case v1alpha1.ShellEnvVarTypeFieldRef:
+			envValue, err := fromFieldRef(req, *envVar.FieldRef)
+			if err != nil {
+				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of fieldRef %s", envVar.ValueRef))
+				return rsp, nil
+			}
+			shellEnvVars[envVar.Key] = envValue
+		default:
+			response.Fatal(rsp, errors.Errorf("shellEnvVars: unknown type %s for key %s", t, envVar.Key))
+			return rsp, nil
 		}
 	}
 

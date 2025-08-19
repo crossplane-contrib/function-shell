@@ -60,7 +60,7 @@ spec:
 ```
 
 - `shellEnvVars` - an array of environment variables with a
-`key` and `value` each.
+`key` and `value` each. Also supports reading from Composite fields with `fieldRef`.
 - `shellCommand` - a shell command line that can contain pipes
 and redirects and calling multiple programs.
 - `shellCommandField` - a reference to a field that contains
@@ -103,6 +103,7 @@ This repository includes the following examples:
 
 - echo
 - datadog-dashboard-ids
+- fieldRef
 - ip-addr-validation
 
 ## Example: Obtain Dashboard Ids from Datadog
