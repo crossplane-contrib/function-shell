@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: parameters.template.fn.crossplane.io
 spec:
   group: template.fn.crossplane.io
@@ -28,6 +28,13 @@ spec:
               may reject unrecognized values.
               More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
+          cacheTTL:
+            default: 1m
+            description: |-
+              TTL for response cache. Function Response caching is an
+              alpha feature in Crossplane can be deprecated or changed
+              in the future.
+            type: string
           kind:
             description: |-
               Kind is a string value representing the REST resource this object represents.
@@ -48,7 +55,33 @@ spec:
             description: shellEnvVars
             items:
               properties:
+                fieldRef:
+                  description: FieldRef is a reference to a field in the Composition
+                  properties:
+                    defaultValue:
+                      description: DefaultValue when Policy is Optional and field
+                        is not available defaults to ""
+                      type: string
+                    path:
+                      description: Path is the field path of the field being referenced,
+                        i.e. spec.myfield, status.output
+                      type: string
+                    policy:
+                      default: Required
+                      description: |-
+                        Policy when the field is not available. If set to "Required" will return
+                        an error if a field is missing. If set to "Optional" will return DefaultValue.
+                      enum:
+                      - Optional
+                      - Required
+                      type: string
+                  required:
+                  - path
+                  type: object
                 key:
+                  type: string
+                type:
+                  description: ShellEnvVarType is a type of ShellEnvVar
                   type: string
                 value:
                   type: string
@@ -65,7 +98,7 @@ spec:
                   type: string
                 type: array
               name:
-                description: Name of the enviroment variable
+                description: Name of the environment variable
                 type: string
             type: object
           stderrField:

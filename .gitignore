@@ -24,3 +24,6 @@ kubeconfig
 function-shell
 function-amd64.xpkg
 function-arm64.xpkg
+
+# OS files
+.DS_Store

@@ -6,25 +6,27 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
+	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
 	"github.com/keegancsmith/shell"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 // Function returns whatever response you ask it to.
 type Function struct {
-	fnv1beta1.UnimplementedFunctionRunnerServiceServer
+	fnv1.UnimplementedFunctionRunnerServiceServer
 
 	log logging.Logger
 }
 
 // RunFunction runs the Function.
-func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequest) (*fnv1beta1.RunFunctionResponse, error) {
+func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "tag", req.GetMeta().GetTag())
 
 	rsp := response.To(req, response.DefaultTTL)
@@ -33,6 +35,15 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	if err := request.GetInput(req, in); err != nil {
 		response.Fatal(rsp, errors.Wrapf(err, "cannot get Function from input"))
 		return rsp, nil
+	}
+
+	if in.CacheTTL != "" {
+		dur, err := time.ParseDuration(in.CacheTTL)
+		if err != nil {
+			response.Fatal(rsp, errors.Wrapf(err, "cannot set cacheTTL"))
+			return rsp, nil
+		}
+		rsp.Meta.Ttl = durationpb.New(dur)
 	}
 
 	oxr, err := request.GetObservedCompositeResource(req)
@@ -88,15 +99,26 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 
 	shellEnvVars := make(map[string]string)
 	for _, envVar := range in.ShellEnvVars {
-		if envVar.ValueRef != "" {
+		switch t := envVar.GetType(); t {
+		case v1alpha1.ShellEnvVarTypeValue:
+			shellEnvVars[envVar.Key] = envVar.Value
+		case v1alpha1.ShellEnvVarTypeValueRef:
 			envValue, err := fromValueRef(req, envVar.ValueRef)
 			if err != nil {
 				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of valueRef %s", envVar.ValueRef))
 				return rsp, nil
 			}
 			shellEnvVars[envVar.Key] = envValue
-		} else {
-			shellEnvVars[envVar.Key] = envVar.Value
+		case v1alpha1.ShellEnvVarTypeFieldRef:
+			envValue, err := fromFieldRef(req, *envVar.FieldRef)
+			if err != nil {
+				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of fieldRef %s", envVar.ValueRef))
+				return rsp, nil
+			}
+			shellEnvVars[envVar.Key] = envValue
+		default:
+			response.Fatal(rsp, errors.Errorf("shellEnvVars: unknown type %s for key %s", t, envVar.Key))
+			return rsp, nil
 		}
 	}
 

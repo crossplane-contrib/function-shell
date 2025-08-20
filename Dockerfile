@@ -10,26 +10,6 @@ ARG GO_VERSION=1
 # architecture that we're building the function for.
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS build
 
-RUN apt-get update && apt-get install -y coreutils jq unzip zsh less
-RUN groupadd -g 65532 nonroot
-RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologin nonroot
-RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws 
-
-
-# Download platform-specific AWS CLI binaries
-ARG TARGETPLATFORM
-
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-       echo "Installing aws-cli for linux/arm64" && \
-       curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "/tmp/awscliv2.zip" && \
-       unzip "/tmp/awscliv2.zip" && \
-       ./aws/install; \
-    else \
-       echo "Installing aws-cli for linux/x86_64" && \
-       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" && \
-       unzip "/tmp/awscliv2.zip" && \
-       ./aws/install; \
-    fi 
 
 WORKDIR /fn
 
@@ -57,21 +37,28 @@ RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/go-build \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /function .
 
-# Produce the Function image. We use a very lightweight 'distroless'
-# Python3 image that includes useful commands but not build tools used
-# in previous stages.
-# FROM python:3.12
-FROM gcr.io/distroless/python3-debian12 AS image
+# Produce the Function image.
+FROM python:3.13-bookworm as image
+RUN apt-get update && apt-get install -y coreutils curl jq unzip zsh less
+RUN groupadd -g 65532 nonroot
+RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologin nonroot
+RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws 
+
+# Download platform-specific AWS CLI binaries
+ARG TARGETPLATFORM
+
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+       echo "Installing aws-cli for linux/arm64" && \
+       curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "/tmp/awscliv2.zip"; \
+    else \
+       echo "Installing aws-cli for linux/x86_64" && \
+       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"; \
+    fi && \
+    unzip "/tmp/awscliv2.zip" && \
+    ./aws/install
 
 WORKDIR /
-COPY --from=build --chown=65532:65532 /scripts /scripts
-COPY --from=build --chown=65532:65532 /.aws /.aws
 
-COPY --from=build /bin /bin
-COPY --from=build /etc /etc
-COPY --from=build /lib /lib
-COPY --from=build /tmp /tmp
-COPY --from=build /usr /usr
 COPY --from=build /function /function
 EXPOSE 9443
 USER nonroot:nonroot
