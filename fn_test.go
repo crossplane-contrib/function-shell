@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -333,6 +334,75 @@ func TestRunFunction(t *testing.T) {
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
 							Message:  "cannot process contents of fieldRef : path must be set",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
+						},
+					},
+				},
+			},
+		},
+		"ResponseWithCustomCacheTTL": {
+			reason: "The Function should set custom TTL when cacheTTL is specified",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": "echo test",
+						"cacheTTL": "5m",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(5 * time.Minute)},
+					Desired: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"spec": {
+									"atFunction": {
+										"shell": {
+											"stdout": "test"
+										}
+									}
+								},
+								"status": {
+									"atFunction": {
+										"shell": {
+											"stderr": ""
+										}
+									}
+								}
+							}`),
+						},
+					},
+				},
+			},
+		},
+		"ResponseWithInvalidCacheTTL": {
+			reason: "The Function should return a fatal error when cacheTTL has invalid format",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": "echo test",
+						"cacheTTL": "5x",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{
+						{
+							Severity: fnv1.Severity_SEVERITY_FATAL,
+							Message:  `cannot set cacheTTL: time: unknown unit "x" in duration "5x"`,
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
