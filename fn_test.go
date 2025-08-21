@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"regexp"
 	"testing"
 	"time"
 
@@ -18,8 +19,9 @@ import (
 
 func TestRunFunction(t *testing.T) {
 	type args struct {
-		ctx context.Context
-		req *fnv1.RunFunctionRequest
+		ctx      context.Context
+		req      *fnv1.RunFunctionRequest
+		useRegex bool // regex match on message due to differing error messages between shells
 	}
 	type want struct {
 		rsp *fnv1.RunFunctionResponse
@@ -134,6 +136,7 @@ func TestRunFunction(t *testing.T) {
 						"stderrField": "status.atFunction.shell.stderr"
                     }`),
 				},
+				useRegex: true,
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
@@ -147,7 +150,7 @@ func TestRunFunction(t *testing.T) {
 									"atFunction": {
 										"shell": {
                                             "stdout": "",
-											"stderr": "/bin/sh: 1: set: Illegal option -o pìpefail"
+											"stderr": "/bin/sh: .*set: .*pìpefail"
 										}
 									}
 								}
@@ -177,10 +180,27 @@ func TestRunFunction(t *testing.T) {
 						"stderrField": "status.atFunction.shell.stderr"
 					}`),
 				},
+				useRegex: true,
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
 					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"status": {
+									"atFunction": {
+										"shell": {
+                                            "stdout": "",
+											"stderr": "/bin/sh: .*unknown-shell-command.*"
+										}
+									}
+								}
+							}`),
+						},
+					},
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
@@ -458,7 +478,21 @@ func TestRunFunction(t *testing.T) {
 			f := &Function{log: logging.NewNopLogger()}
 			rsp, err := f.RunFunction(tc.args.ctx, tc.args.req)
 
-			if diff := cmp.Diff(tc.want.rsp, rsp, protocmp.Transform(), protocmp.IgnoreFields(&fnv1.Result{}, "message")); diff != "" {
+			var cmpOpts []cmp.Option
+			cmpOpts = append(cmpOpts, protocmp.Transform(), protocmp.IgnoreFields(&fnv1.Result{}, "message"))
+
+			if tc.args.useRegex {
+				cmpOpts = append(cmpOpts, cmp.Comparer(func(expected, actual string) bool {
+					// If expected looks like a regex pattern, use regex matching
+					if regexp.MustCompile(`^.*\.\*.*$`).MatchString(expected) {
+						matched, _ := regexp.MatchString(expected, actual)
+						return matched
+					}
+					return expected == actual
+				}))
+			}
+
+			if diff := cmp.Diff(tc.want.rsp, rsp, cmpOpts...); diff != "" {
 				t.Errorf("%s\nf.RunFunction(...): -want rsp, +got rsp:\n%s", tc.reason, diff)
 			}
 
