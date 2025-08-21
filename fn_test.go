@@ -211,6 +211,49 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
+		"ResponseIsFailingCommandWithOutput": {
+			reason: "The Function should capture both stdout and stderr when a command fails but produces output",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": "echo 'success output'; echo 'error output' >&2; exit 1",
+						"stdoutField": "status.atFunction.shell.stdout",
+						"stderrField": "status.atFunction.shell.stderr"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "",
+								"kind": "",
+								"status": {
+									"atFunction": {
+										"shell": {
+											"stdout": "success output",
+											"stderr": "error output"
+										}
+									}
+								}
+							}`),
+						},
+					},
+					Results: []*fnv1.Result{
+						{
+							Severity: fnv1.Severity_SEVERITY_FATAL,
+							Message:  "shellCmd \"echo 'success output'; echo 'error output' >&2; exit 1\" for \"\" failed with error output",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
+						},
+					},
+				},
+			},
+		},
 		"ResponseIsEchoEnvVar": {
 			reason: "The Function should accept and use environment variables",
 			args: args{
