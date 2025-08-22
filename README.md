@@ -13,7 +13,33 @@ for how to pass secrets in `function-shell`
 is expected to be enhanced with the above pattern.
 
 The `function-shell` accepts commands to run in a shell and it
-returns the output to specified fields. It accepts the following parameters:
+returns the output to specified fields.
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Parameters](#parameters)
+- [Error Handling and Output Capture](#error-handling-and-output-capture)
+- [Caching Function Outputs](#caching-function-outputs)
+- [Examples](#examples)
+- [Development and Test](#development-and-test)
+
+## Quick Start
+
+Here's a minimal example to get started:
+
+```yaml
+input:
+  apiVersion: shell.fn.crossplane.io/v1alpha1
+  kind: Parameters
+  shellCommand: echo "Hello from shell!"
+  stdoutField: status.atFunction.shell.stdout
+  stderrField: status.atFunction.shell.stderr
+```
+
+## Parameters
+
+The function accepts the following parameters:
 
 - `shellEnvVarsRef` - referencing environment variables in the
 function-shell Kubernetes pod that were loaded through a
@@ -70,6 +96,23 @@ standard output should be written.
 - `stderrField` - the path to the field where the shell
 standard error output should be written.
 
+## Error Handling and Output Capture
+
+The function-shell captures both stdout and stderr output **regardless of command success or failure**. This provides complete observability for debugging shell command execution.
+
+### Behavior on Success
+
+- Command exit code 0: stdout/stderr written to specified fields
+- Function execution marked as successful
+- No fatal results generated
+
+### Behavior on Failure
+
+- Command exit code != 0: stdout/stderr is captured and written to specified fields
+- Function execution marked as failed with `SEVERITY_FATAL` result
+- Error message includes details about the failure and captured stderr
+- This allows inspection of both successful output and error details
+
 ## Caching Function Outputs
 
 In Crossplane 1.20.0 and 2.0.0, Function Response Caching was added
@@ -77,7 +120,14 @@ as an alpha feature. Crossplane will cache the results of a function invocation
 until a Time-To-Live (TTL) has been exceeded. This can significantly reduce
 the number of times the function is called.
 
-To enable Function Response Caching, update the crossplane deployment by adding `--enable-function-response-cache` to the `args` of the Crossplane deployment.
+To enable Function Response Caching, update the crossplane deployment by adding `--enable-function-response-cache` to the `args` of the Crossplane deployment. Enabling `--debug` on
+the Crossplane deployment will log cache activity.
+
+```shell
+helm upgrade --install crossplane --namespace crossplane-system \
+--create-namespace crossplane-stable/crossplane --wait \
+--set args='{"--debug","--enable-function-response-cache"}'
+```
 
 Next, set the `cacheTTL`, using a time duration like `90s`, `5m`, or `4h30m`:
 
@@ -95,16 +145,22 @@ input:
   stderrField: status.atFunction.shell.stderr
 ```
 
+Crossplane will cache the returned results of the function for the
+duration of the TTL.
+
+If the Composite Resource or any of the Managed Resources in the Composition are updated, Crossplane will invoke the function and
+set a new cache duration for the output.
+
 See the echo [composition.yaml](example/echo/composition.yaml) for an example.
 
 ## Examples
 
-This repository includes the following examples:
+This repository includes the following examples in the `example/` directory:
 
-- echo
-- datadog-dashboard-ids
-- fieldRef
-- ip-addr-validation
+- **[echo](example/echo/)** - Basic shell command execution with output capture
+- **[datadog-dashboard-ids](example/datadog-dashboard-ids/)** - API integration with secret management
+- **[fieldRef](example/fieldRef/)** - Using field references for dynamic values
+- **[ip-addr-validation](example/ip-addr-validation/)** - Input validation patterns
 
 ## Example: Obtain Dashboard Ids from Datadog
 
@@ -137,7 +193,7 @@ Replace `YOUR_API_KEY` and `YOUR_APP_KEY` with your respective keys.
 ```json
 {
     "DATADOG_API_KEY": "YOUR_API_KEY",
-    "DATADOG_APP_KEY": "YOIR_APP_KEY"
+    "DATADOG_APP_KEY": "YOUR_APP_KEY"
 }
 ```
 
@@ -159,7 +215,7 @@ spec:
         # name: crossplane-contrib-function-shell
         name: function-shell
       input:
-        apiVersion: shell.fn.crossplane.io/v1beta1
+        apiVersion: shell.fn.crossplane.io/v1alpha1
         kind: Parameters
         # Load shellEnvVarsRef from a Kubernetes secret
         # through a deploymentRuntimeConfig into the
