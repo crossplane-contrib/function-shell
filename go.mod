@@ -6,7 +6,8 @@ toolchain go1.24.6
 
 require (
 	github.com/alecthomas/kong v1.12.1
-	github.com/crossplane/crossplane-runtime v1.20.0
+	github.com/crossplane/crossplane-runtime v1.18.0
+	github.com/crossplane/crossplane-runtime/v2 v2.0.0
 	github.com/crossplane/function-sdk-go v0.4.0
 	github.com/google/go-cmp v0.7.0
 	github.com/keegancsmith/shell v0.0.0-20160208231706-ccb53e0c7c5c
