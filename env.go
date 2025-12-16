@@ -49,7 +49,7 @@ func fromFieldRef(req *fnv1.RunFunctionRequest, fieldRef v1alpha1.FieldRef) (str
 				case v1alpha1.FieldRefPolicyRequired:
 					fallthrough
 				default:
-					return "", errors.Wrapf(err, "cannot get context value at %s", match[2])
+					return "", errors.Wrap(err, "cannot get context value")
 				}
 			}
 			return fmt.Sprintf("%v", value), nil
@@ -67,7 +67,7 @@ func fromFieldRef(req *fnv1.RunFunctionRequest, fieldRef v1alpha1.FieldRef) (str
 			case v1alpha1.FieldRefPolicyRequired:
 				fallthrough
 			default:
-				return "", errors.Wrapf(err, "cannot get observed composite value at %s", fieldRef.Path)
+				return "", errors.Wrap(err, "cannot get observed composite value")
 			}
 		}
 		return fmt.Sprintf("%v", value), nil

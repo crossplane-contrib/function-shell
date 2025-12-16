@@ -150,7 +150,7 @@ func TestFromFieldRef(t *testing.T) {
 			},
 			want: want{
 				result: "",
-				err:    errors.New("cannot get observed composite value at spec.foo: no such field"),
+				err:    errors.New("cannot get observed composite value: spec.foo: no such field"),
 			},
 		},
 		"FromCompositeMissingErrorDefaultPolicy": {
@@ -175,7 +175,7 @@ func TestFromFieldRef(t *testing.T) {
 			},
 			want: want{
 				result: "",
-				err:    errors.New("cannot get observed composite value at spec.foo: no such field"),
+				err:    errors.New("cannot get observed composite value: spec.foo: no such field"),
 			},
 		},
 		"FromCompositeMissingFieldOptionalPolicyDefaultValue": {
@@ -267,7 +267,7 @@ func TestFromFieldRef(t *testing.T) {
 			},
 			want: want{
 				result: "",
-				err:    errors.New("cannot get context value at bad: no such field"),
+				err:    errors.New("cannot get context value: bad: no such field"),
 			},
 		},
 		"FromContextMissingErrorDefaultPolicy": {
@@ -286,7 +286,7 @@ func TestFromFieldRef(t *testing.T) {
 			},
 			want: want{
 				result: "",
-				err:    errors.New("cannot get context value at bad: no such field"),
+				err:    errors.New("cannot get context value: bad: no such field"),
 			},
 		},
 		"FromContextMissingFieldOptionalPolicyNoDefaultValue": {
