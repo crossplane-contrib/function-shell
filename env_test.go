@@ -5,15 +5,15 @@ import (
 
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
-	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
-	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/testing/protocmp"
+
+	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
+	"github.com/crossplane/function-sdk-go/resource"
 )
 
 func TestFromValueRef(t *testing.T) {
-
 	type args struct {
 		req  *fnv1.RunFunctionRequest
 		path string
@@ -84,11 +84,9 @@ func TestFromValueRef(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestFromFieldRef(t *testing.T) {
-
 	type args struct {
 		req      *fnv1.RunFunctionRequest
 		fieldRef v1alpha1.FieldRef
@@ -152,7 +150,7 @@ func TestFromFieldRef(t *testing.T) {
 			},
 			want: want{
 				result: "",
-				err:    errors.New("cannot get observed composite value at spec.foo: spec.foo: no such field"),
+				err:    errors.New("cannot get observed composite value: spec.foo: no such field"),
 			},
 		},
 		"FromCompositeMissingErrorDefaultPolicy": {
@@ -177,7 +175,7 @@ func TestFromFieldRef(t *testing.T) {
 			},
 			want: want{
 				result: "",
-				err:    errors.New("cannot get observed composite value at spec.foo: spec.foo: no such field"),
+				err:    errors.New("cannot get observed composite value: spec.foo: no such field"),
 			},
 		},
 		"FromCompositeMissingFieldOptionalPolicyDefaultValue": {
@@ -269,7 +267,7 @@ func TestFromFieldRef(t *testing.T) {
 			},
 			want: want{
 				result: "",
-				err:    errors.New("cannot get context value at bad: bad: no such field"),
+				err:    errors.New("cannot get context value: bad: no such field"),
 			},
 		},
 		"FromContextMissingErrorDefaultPolicy": {
@@ -288,7 +286,7 @@ func TestFromFieldRef(t *testing.T) {
 			},
 			want: want{
 				result: "",
-				err:    errors.New("cannot get context value at bad: bad: no such field"),
+				err:    errors.New("cannot get context value: bad: no such field"),
 			},
 		},
 		"FromContextMissingFieldOptionalPolicyNoDefaultValue": {
@@ -352,5 +350,4 @@ func TestFromFieldRef(t *testing.T) {
 			}
 		})
 	}
-
 }

@@ -11,11 +11,12 @@ import (
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/logging"
+	"github.com/keegancsmith/shell"
+	"google.golang.org/protobuf/types/known/durationpb"
+
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
-	"github.com/keegancsmith/shell"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 // Function returns whatever response you ask it to.
@@ -26,6 +27,8 @@ type Function struct {
 }
 
 // RunFunction runs the Function.
+//
+//gocognit:ignore
 func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "tag", req.GetMeta().GetTag())
 
@@ -164,7 +167,8 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	}
 
 	if cmderr != nil {
-		if exiterr, ok := cmderr.(*exec.ExitError); ok {
+		exiterr := &exec.ExitError{}
+		if errors.As(cmderr, &exiterr) {
 			msg := fmt.Sprintf("shellCmd %q for %q failed with %s", shellCmd, oxr.Resource.GetKind(), exiterr.Stderr)
 			response.Fatal(rsp, errors.Wrap(cmderr, msg))
 		}
