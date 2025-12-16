@@ -9,10 +9,11 @@ import (
 	"github.com/crossplane-contrib/function-shell/input/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/fieldpath"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func addShellEnvVarsFromRef(envVarsRef v1alpha1.ShellEnvVarsRef, shellEnvVars map[string]string) (map[string]string, error) {
@@ -53,7 +54,6 @@ func fromFieldRef(req *fnv1.RunFunctionRequest, fieldRef v1alpha1.FieldRef) (str
 			}
 			return fmt.Sprintf("%v", value), nil
 		}
-
 	} else {
 		oxr, err := request.GetObservedCompositeResource(req)
 		if err != nil {
@@ -71,12 +71,11 @@ func fromFieldRef(req *fnv1.RunFunctionRequest, fieldRef v1alpha1.FieldRef) (str
 			}
 		}
 		return fmt.Sprintf("%v", value), nil
-
 	}
 	return fieldRef.DefaultValue, nil
 }
 
-// a valueRef behaves like a fieldRef with a Required Policy
+// a valueRef behaves like a fieldRef with a Required Policy.
 func fromValueRef(req *fnv1.RunFunctionRequest, path string) (string, error) {
 	return fromFieldRef(
 		req, v1alpha1.FieldRef{
