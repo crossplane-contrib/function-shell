@@ -10,7 +10,7 @@ require (
 	github.com/keegancsmith/shell v0.0.0-20160208231706-ccb53e0c7c5c
 	google.golang.org/protobuf v1.36.11
 	k8s.io/apimachinery v0.35.1
-	sigs.k8s.io/controller-tools v0.20.0
+	sigs.k8s.io/controller-tools v0.20.1
 )
 
 require (
