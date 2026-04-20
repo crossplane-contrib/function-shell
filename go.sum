@@ -27,6 +27,8 @@ github.com/crossplane/crossplane-runtime/v2 v2.1.0 h1:JBMhL9T+/PfyjLAQEdZWlKLvA3
 github.com/crossplane/crossplane-runtime/v2 v2.1.0/go.mod h1:j78pmk0qlI//Ur7zHhqTr8iePHFcwJKrZnzZB+Fg4t0=
 github.com/crossplane/crossplane-runtime/v2 v2.2.0 h1:jLoQm9D5buk9lBqwRtQ40ueaFotjOljJATq+24bVYI8=
 github.com/crossplane/crossplane-runtime/v2 v2.2.0/go.mod h1:8I+x4w5bG4x8aO8ifF/QC8GZoNCN6v21NHzgoYPNYAQ=
+github.com/crossplane/crossplane-runtime/v2 v2.2.1 h1:CJXV8+1SDXLYJx67sUO4MIuLCkKEOKxCS2zg02nBqUI=
+github.com/crossplane/crossplane-runtime/v2 v2.2.1/go.mod h1:3Xq18YLf2en0BB2OZpcixTKazeX7bS3txLbQHjOR52c=
 github.com/crossplane/function-sdk-go v0.5.0 h1:wF+pOsR6jlIUHZjpSL6tbuSP0UB7s25+4AGkNytsHKk=
 github.com/crossplane/function-sdk-go v0.5.0/go.mod h1:bIvGe17dIdpZ/YULrg5xAP8MK+eS3ot5BAuQEntaeWc=
 github.com/crossplane/function-sdk-go v0.6.0 h1:4lRs6diDrlp+HdxnYtpSKp0aHEOQjO4FSng3//mbGuM=
