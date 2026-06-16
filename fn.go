@@ -139,7 +139,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		exportCmds = exportCmds + "export " + k + "=\"" + v + "\";"
 	}
 
-	log.Info(shellCmd)
+	log.Debug(shellCmd)
 
 	var stdout, stderr bytes.Buffer
 	cmd := shell.Commandf(exportCmds + shellCmd)
@@ -150,7 +150,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	sout := strings.TrimSpace(stdout.String())
 	serr := strings.TrimSpace(stderr.String())
 
-	log.Debug(shellCmd, "stdout", sout, "stderr", serr)
+	log.Info("Function output", "tag", req.GetMeta().GetTag(), "stdout", sout, "stderr", serr)
 
 	err = dxr.Resource.SetValue(stdoutField, sout)
 	if err != nil {
