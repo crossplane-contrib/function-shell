@@ -13,6 +13,8 @@ import (
 	"github.com/crossplane/function-sdk-go/resource"
 )
 
+const testPathSpecFoo = "spec.foo"
+
 func TestFromValueRef(t *testing.T) {
 	type args struct {
 		req  *fnv1.RunFunctionRequest
@@ -45,7 +47,7 @@ func TestFromValueRef(t *testing.T) {
 						},
 					},
 				},
-				path: "spec.foo",
+				path: testPathSpecFoo,
 			},
 			want: want{
 				result: "bar",
@@ -119,7 +121,7 @@ func TestFromFieldRef(t *testing.T) {
 					},
 				},
 				fieldRef: v1alpha1.FieldRef{
-					Path: "spec.foo",
+					Path: testPathSpecFoo,
 				},
 			},
 			want: want{
@@ -144,7 +146,7 @@ func TestFromFieldRef(t *testing.T) {
 					},
 				},
 				fieldRef: v1alpha1.FieldRef{
-					Path:   "spec.foo",
+					Path:   testPathSpecFoo,
 					Policy: v1alpha1.FieldRefPolicyRequired,
 				},
 			},
@@ -170,7 +172,7 @@ func TestFromFieldRef(t *testing.T) {
 					},
 				},
 				fieldRef: v1alpha1.FieldRef{
-					Path: "spec.foo",
+					Path: testPathSpecFoo,
 				},
 			},
 			want: want{
@@ -196,7 +198,7 @@ func TestFromFieldRef(t *testing.T) {
 				},
 				fieldRef: v1alpha1.FieldRef{
 					DefaultValue: "default",
-					Path:         "spec.foo",
+					Path:         testPathSpecFoo,
 					Policy:       v1alpha1.FieldRefPolicyOptional,
 				},
 			},
@@ -222,7 +224,7 @@ func TestFromFieldRef(t *testing.T) {
 					},
 				},
 				fieldRef: v1alpha1.FieldRef{
-					Path:   "spec.foo",
+					Path:   testPathSpecFoo,
 					Policy: v1alpha1.FieldRefPolicyOptional,
 				},
 			},
