@@ -17,6 +17,8 @@ import (
 	"github.com/crossplane/function-sdk-go/response"
 )
 
+const testTagHello = "hello"
+
 func TestRunFunction(t *testing.T) {
 	type args struct {
 		ctx      context.Context
@@ -37,7 +39,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should return a fatal result if no input was specified",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters"
@@ -46,7 +48,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
@@ -61,7 +63,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should return a response when after a script is run",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -71,7 +73,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
@@ -86,7 +88,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should write stdout to the specified field",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -97,7 +99,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Desired: &fnv1.State{
 						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
@@ -127,7 +129,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The function should write to the specified stderr when the shell command is invalid",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -140,7 +142,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Desired: &fnv1.State{
 						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
@@ -171,7 +173,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should write to the specified stderr field when the shellCommand is not found",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -184,7 +186,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Desired: &fnv1.State{
 						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
@@ -215,7 +217,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should capture both stdout and stderr when a command fails but produces output",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -227,7 +229,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Desired: &fnv1.State{
 						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
@@ -258,7 +260,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should accept and use environment variables",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -270,7 +272,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Desired: &fnv1.State{
 						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
@@ -300,7 +302,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should accept and use environment variables from a fieldPath",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -323,7 +325,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Desired: &fnv1.State{
 						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
@@ -353,7 +355,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should accept and use environment variables from a default FieldRef ",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -365,7 +367,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Desired: &fnv1.State{
 						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
@@ -395,7 +397,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should return an error when a bad shellEnVars type is provided",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -407,7 +409,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
@@ -422,7 +424,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should return an error when a shellEnvVars fieldRef.path is empty",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -434,7 +436,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
@@ -449,7 +451,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should set custom TTL when cacheTTL is specified",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -461,7 +463,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(5 * time.Minute)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(5 * time.Minute)},
 					Desired: &fnv1.State{
 						Composite: &fnv1.Resource{
 							Resource: resource.MustStructJSON(`{
@@ -491,7 +493,7 @@ func TestRunFunction(t *testing.T) {
 			reason: "The Function should return a fatal error when cacheTTL has invalid format",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "hello"},
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -503,7 +505,7 @@ func TestRunFunction(t *testing.T) {
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
