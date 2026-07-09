@@ -55,7 +55,8 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"; \
     fi && \
     unzip "/tmp/awscliv2.zip" && \
-    ./aws/install
+    ./aws/install && \
+    rm -rf /aws /tmp/awscliv2.zip
 
 WORKDIR /
 
