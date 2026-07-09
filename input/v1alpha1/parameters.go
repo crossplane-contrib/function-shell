@@ -94,7 +94,7 @@ func (sev *ShellEnvVar) GetType() ShellEnvVarType {
 	return sev.Type
 }
 
-// ShellEnvVarsRef refers to an environment variable or secret leaded into
+// ShellEnvVarsRef refers to an environment variable or secret loaded into
 // the function pod.
 type ShellEnvVarsRef struct {
 	// The Key whose value is the secret
