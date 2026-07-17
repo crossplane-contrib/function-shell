@@ -39,10 +39,12 @@ RUN --mount=target=. \
 
 # Produce the Function image.
 FROM python:3.14-bookworm AS image
-RUN apt-get update && apt-get install -y coreutils curl jq unzip zsh less
+RUN apt-get update && apt-get install -y coreutils curl jq unzip zsh less libnss-wrapper
 RUN groupadd -g 65532 nonroot
-RUN useradd -u 65532 -g 65532 -d /home/nonroot --system --shell /usr/sbin/nologin nonroot
-RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws 
+RUN useradd -u 65532 -g 65532 -d /home/nonroot --create-home nonroot
+RUN mkdir /scripts /.aws && chown 65532:65532 /scripts /.aws
+COPY scripts/nss-wrapper-entrypoint.sh /scripts/nss-wrapper-entrypoint.sh
+RUN chmod +x /scripts/nss-wrapper-entrypoint.sh
 
 # Download platform-specific AWS CLI binaries
 ARG TARGETPLATFORM
