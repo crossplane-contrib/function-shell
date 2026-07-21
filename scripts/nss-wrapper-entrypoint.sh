@@ -28,9 +28,13 @@ if [ "$USER_ID" != "0" ] && [ "$USER_ID" != "65532" ]; then
     export NSS_WRAPPER_PASSWD=/tmp/passwd
     export NSS_WRAPPER_GROUP=/tmp/group
 
-    # Create a passwd entry for the current UID
+    # Create a home directory for the arbitrary user in /tmp
+    export HOME=/tmp/home
+    mkdir -p "$HOME"
+
+    # Create a passwd entry for the current UID with writable home dir
     cat /etc/passwd > "$NSS_WRAPPER_PASSWD"
-    echo "runner:x:${USER_ID}:${GROUP_ID}:Function Runner:/home/nonroot:/bin/bash" >> "$NSS_WRAPPER_PASSWD"
+    echo "runner:x:${USER_ID}:${GROUP_ID}:Function Runner:${HOME}:/bin/bash" >> "$NSS_WRAPPER_PASSWD"
 
     # Create a group entry for the current GID if it doesn't exist
     cat /etc/group > "$NSS_WRAPPER_GROUP"
@@ -39,6 +43,9 @@ if [ "$USER_ID" != "0" ] && [ "$USER_ID" != "65532" ]; then
     fi
 
     export LD_PRELOAD=libnss_wrapper.so
+
+    # Change to home directory
+    cd "$HOME"
 fi
 
 exec "$@"
