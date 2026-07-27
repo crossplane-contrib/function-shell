@@ -19,6 +19,9 @@ linters:
     - nilnil
     - funcorder
 
+    # Deprecated linters that have been replaced with newer versions.
+    - gomodguard  # Replaced by gomodguard_v2 (deprecated since v2.12.0)
+
     # Below are linters that lint for things we don't value. Each entry below
     # this line must have a comment explaining the rationale.
 
