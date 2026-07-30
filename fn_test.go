@@ -41,7 +41,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters"
 					}`),
 				},
@@ -65,7 +65,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellCommand": ""
 					}`),
@@ -90,7 +90,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellCommand": "echo foo",
 						"stdoutField": "spec.atFunction.shell.stdout"
@@ -131,7 +131,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellCommand": "set -euo pìpefail",
 						"stdoutField": "status.atFunction.shell.stdout",
@@ -175,7 +175,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellCommand": "unknown-shell-command",
 						"stdoutField": "status.atFunction.shell.stdout",
@@ -219,7 +219,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellCommand": "echo 'success output'; echo 'error output' >&2; exit 1",
 						"stdoutField": "status.atFunction.shell.stdout",
@@ -262,7 +262,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellEnvVars": [{"key": "TEST_ENV_VAR", "value": "foo"}],
 						"shellCommand": "echo ${TEST_ENV_VAR}",
@@ -304,7 +304,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellEnvVars": [{"key": "TEST_ENV_VAR", "fieldRef":{"path": "spec.foo", "policy": "Required"}, "type": "FieldRef"}],
 						"shellCommand": "echo ${TEST_ENV_VAR}",
@@ -357,7 +357,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellEnvVars": [{"key": "TEST_ENV_VAR", "fieldRef":{"path": "spec.bad", "policy": "Optional", "defaultValue": "default"}, "type": "FieldRef"}],
 						"shellCommand": "echo ${TEST_ENV_VAR}",
@@ -399,7 +399,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellEnvVars": [{"key": "TEST_ENV_VAR", "value": "foo", "type": "bad"}],
 						"shellCommand": "echo ${TEST_ENV_VAR}",
@@ -426,7 +426,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellEnvVars": [{"key": "TEST_ENV_VAR", "fieldRef":{"policy": "Optional", "defaultValue": "default"}, "type": "FieldRef"}],
 						"shellCommand": "echo ${TEST_ENV_VAR}",
@@ -453,7 +453,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellCommand": "echo test",
 						"cacheTTL": "5m",
@@ -495,7 +495,7 @@ func TestRunFunction(t *testing.T) {
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagHello},
 					Input: resource.MustStructJSON(`{
-						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
 						"shellCommand": "echo test",
 						"cacheTTL": "5x",
