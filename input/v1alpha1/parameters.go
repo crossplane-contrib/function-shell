@@ -16,7 +16,7 @@ import (
 // +kubebuilder:storageversion
 // +kubebuilder:resource:categories=crossplane
 type Parameters struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
