@@ -16,8 +16,9 @@ import (
 // +kubebuilder:storageversion
 // +kubebuilder:resource:categories=crossplane
 type Parameters struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata"`
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// shellEnvVarsRef
 	// +optional
@@ -94,7 +95,7 @@ func (sev *ShellEnvVar) GetType() ShellEnvVarType {
 	return sev.Type
 }
 
-// ShellEnvVarsRef refers to an environment variable or secret leaded into
+// ShellEnvVarsRef refers to an environment variable or secret loaded into
 // the function pod.
 type ShellEnvVarsRef struct {
 	// The Key whose value is the secret

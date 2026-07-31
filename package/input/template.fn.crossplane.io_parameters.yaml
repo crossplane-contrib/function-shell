@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   name: parameters.template.fn.crossplane.io
 spec:
   group: template.fn.crossplane.io
@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Input can be used to provide input to this Function.
+        description: Parameters can be used to provide input to this Function.
         properties:
           apiVersion:
             description: |-
@@ -54,9 +54,11 @@ spec:
           shellEnvVars:
             description: shellEnvVars
             items:
+              description: ShellEnvVar is a Shell Environment Variable of the form
+                key=value.
               properties:
                 fieldRef:
-                  description: FieldRef is a reference to a field in the Composition
+                  description: FieldRef is a reference to a field in the Composition.
                   properties:
                     defaultValue:
                       description: DefaultValue when Policy is Optional and field
@@ -79,13 +81,18 @@ spec:
                   - path
                   type: object
                 key:
+                  description: Key is the Environment Variable key like API_KEY
                   type: string
                 type:
-                  description: ShellEnvVarType is a type of ShellEnvVar
+                  description: 'Type is the type of ShellEnVar: Value, ValueRef, FieldRef.'
                   type: string
                 value:
+                  description: Value is a fixed value, like http://api.example.com
                   type: string
                 valueRef:
+                  description: |-
+                    ValueRef retrieves a Environment Variable value from a composite field.
+                    Can result in error if field is not set: use FieldRef which can handle missing fields.
                   type: string
               type: object
             type: array

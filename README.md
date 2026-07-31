@@ -21,6 +21,7 @@ returns the output to specified fields.
 - [Parameters](#parameters)
 - [Error Handling and Output Capture](#error-handling-and-output-capture)
 - [Caching Function Outputs](#caching-function-outputs)
+- [Running as Arbitrary User IDs](#running-as-arbitrary-user-ids)
 - [Examples](#examples)
 - [Development and Test](#development-and-test)
 
@@ -153,10 +154,69 @@ set a new cache duration for the output.
 
 See the echo [composition.yaml](example/echo/composition.yaml) for an example.
 
+## Running as Arbitrary User IDs
+
+Some Kubernetes environments (OpenShift, restricted Pod Security Standards) force containers to run as arbitrary user IDs that don't exist in `/etc/passwd`. This can cause tools like AWS CLI, git, and ssh to fail because they can't look up the current user.
+
+The function-shell image includes `nss-wrapper` support to handle this scenario. When enabled via a `DeploymentRuntimeConfig`, the entrypoint script creates a fake passwd/group entry for the running UID, allowing tools that require user lookup to function correctly.
+
+### Enabling nss-wrapper
+
+Configure your `DeploymentRuntimeConfig` to use the nss-wrapper entrypoint:
+
+```yaml
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: function-shell-arbitrary-uid
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+            - name: package-runtime
+              # Override the entrypoint to use nss-wrapper
+              command: ["/scripts/nss-wrapper-entrypoint.sh"]
+              args: ["/function"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                privileged: false
+                runAsNonRoot: true
+                runAsUser: 2000
+                runAsGroup: 2000
+```
+
+Reference this config in your Function:
+
+```yaml
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-shell
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-shell:v0.7.0
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: function-shell-arbitrary-uid
+```
+
+The nss-wrapper entrypoint:
+
+- Creates a home directory at `/tmp/home` (writable by any user)
+- Generates passwd/group entries for the arbitrary UID/GID
+- Sets `HOME` environment variable appropriately
+- Only activates when running as a UID other than 0 (root) or 65532 (default nonroot user)
+
+See the [arbitrary-uid example](example/arbitrary-uid/) for a complete configuration.
+
 ## Examples
 
 This repository includes the following examples in the `example/` directory:
 
+- **[arbitrary-uid](example/arbitrary-uid/)** - Running as arbitrary user IDs (OpenShift/restricted environments)
 - **[echo](example/echo/)** - Basic shell command execution with output capture
 - **[datadog-dashboard-ids](example/datadog-dashboard-ids/)** - API integration with secret management
 - **[fieldRef](example/fieldRef/)** - Using field references for dynamic values

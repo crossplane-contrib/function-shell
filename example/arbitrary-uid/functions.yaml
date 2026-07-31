@@ -1,0 +1,52 @@
+# Example: Running function-shell as an arbitrary UID
+#
+# Some Kubernetes environments (OpenShift, restricted Pod Security Standards)
+# force containers to run as arbitrary user IDs that don't exist in /etc/passwd.
+# This can cause tools like AWS CLI, git, and ssh to fail.
+#
+# This example shows how to use the nss-wrapper entrypoint to handle arbitrary UIDs.
+# The entrypoint script creates a fake passwd entry for the running UID, allowing
+# tools that require user lookup to function correctly.
+#
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-shell
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-shell:v0.7.0
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: function-shell-arbitrary-uid
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: function-shell-arbitrary-uid
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+          containers:
+            - name: package-runtime
+              # Override the entrypoint to use nss-wrapper
+              # This enables running as arbitrary UIDs
+              command: ["/scripts/nss-wrapper-entrypoint.sh"]
+              args: ["/function"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                privileged: false
+                runAsNonRoot: true
+                # Example: OpenShift may assign a UID like 1000580000
+                # The nss-wrapper entrypoint will handle this automatically
+                runAsUser: 2000
+                runAsGroup: 2000
+                capabilities:
+                  drop: ["ALL"]
+                seccompProfile:
+                  type: RuntimeDefault

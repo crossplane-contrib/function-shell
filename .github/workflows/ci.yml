@@ -65,6 +65,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Check Generated Code
+        run: |
+          go generate ./...
+          git diff --exit-code || (echo "Generated code is out of date. Run 'go generate ./...' and commit the changes." && exit 1)
+
       - name: Run Unit Tests
         run: go test -v -cover ./...
 

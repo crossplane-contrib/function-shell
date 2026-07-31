@@ -1,0 +1,22 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: arbitrary-uid-example
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: ArbitraryUID
+  mode: Pipeline
+  pipeline:
+    - step: shell
+      functionRef:
+        name: function-shell
+      input:
+        apiVersion: shell.fn.crossplane.io/v1alpha1
+        kind: Parameters
+        shellCommand: |
+          echo "HOME=${HOME}"
+          echo "$(id)"
+          echo "whoami=$(whoami)"
+        stdoutField: status.atFunction.shell.stdout
+        stderrField: status.atFunction.shell.stderr
