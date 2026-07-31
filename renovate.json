@@ -17,6 +17,13 @@
         "example/**"
       ],
       "groupName": "examples"
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "pinDigests": true,
+      "groupName": "GitHub Actions"
     }
   ]
 }
