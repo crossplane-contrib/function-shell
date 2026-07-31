@@ -24,13 +24,19 @@ function correctly.
 
 ## Testing Locally
 
+Note: Local testing with `crossplane beta render` runs the function on your host machine
+without the container's user configuration. The nss-wrapper functionality and arbitrary UID
+handling can only be fully tested in a Kubernetes cluster (see "Deploying to a Cluster" below).
+
+If you want to test the function logic locally:
+
 1. Start the function in development mode:
 
    ```shell
    go run . --insecure --debug
    ```
 
-2. In another terminal, render the example:
+2. In another terminal, render the example (this will use your host user, not UID 2000):
 
    ```shell
    crossplane beta render \
@@ -38,27 +44,6 @@ function correctly.
        example/arbitrary-uid/composition.yaml \
        example/arbitrary-uid/functions.yaml
    ```
-
-## Expected Output
-
-The composition runs a shell command that outputs:
-
-- `HOME` environment variable (should be `/tmp/home` for arbitrary UIDs)
-- Current user ID and group ID
-- Output of `whoami` (should be `runner` for arbitrary UIDs)
-
-Example output in `status.atFunction.shell.stdout`:
-
-```yaml
-status:
-  atFunction:
-    shell:
-      stderr: ""
-      stdout: |-
-        HOME=/tmp/home
-        uid=2000(runner) gid=2000(runner) groups=2000(runner)
-        whoami=runner
-```
 
 ## Deploying to a Cluster
 
@@ -84,14 +69,14 @@ status:
 4. Check the composite resource status:
 
    ```shell
-   kubectl get xr example-arbitrary-uid -o yaml
+   kubectl get arbitraryuid example-arbitrary-uid -o yaml
    ```
 
    The output should show the function successfully ran with the arbitrary UID:
 
    ```yaml
    apiVersion: example.crossplane.io/v1
-   kind: XR
+   kind: ArbitraryUID
    metadata:
      name: example-arbitrary-uid
    spec:

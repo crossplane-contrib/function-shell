@@ -19,33 +19,37 @@
 
 set -e
 
+[ "$#" -eq 0 ] && { echo "usage: $0 <command> [args...]" >&2; exit 64; }
+
 USER_ID=$(id -u)
 GROUP_ID=$(id -g)
 
-# Only enable nss_wrapper if running as an arbitrary UID
-# (not root and not the built-in nonroot user)
-if [ "$USER_ID" != "0" ] && [ "$USER_ID" != "65532" ]; then
+# Pick a writable HOME: the assigned UID may not own the home directory that
+# /etc/passwd (or the image's ENV HOME) points at.
+if [ ! -w "${HOME:-/}" ]; then
+    for candidate in /tmp/home /tmp; do
+        if mkdir -p "$candidate" 2>/dev/null && [ -w "$candidate" ]; then
+            export HOME="$candidate"
+            break
+        fi
+    done
+    [ -w "$HOME" ] || echo "warning: no writable HOME found ($HOME)" >&2
+fi
+
+# Enable nss_wrapper only when the current UID has no passwd entry.
+if ! getent passwd "$USER_ID" >/dev/null 2>&1 && [ -w "$HOME" ]; then
     export NSS_WRAPPER_PASSWD=/tmp/passwd
     export NSS_WRAPPER_GROUP=/tmp/group
 
-    # Create a home directory for the arbitrary user in /tmp
-    export HOME=/tmp/home
-    mkdir -p "$HOME"
-
-    # Create a passwd entry for the current UID with writable home dir
     cat /etc/passwd > "$NSS_WRAPPER_PASSWD"
-    echo "runner:x:${USER_ID}:${GROUP_ID}:Function Runner:${HOME}:/bin/bash" >> "$NSS_WRAPPER_PASSWD"
+    echo "runner:x:${USER_ID}:${GROUP_ID}:Function Runner:${HOME}:/usr/sbin/nologin" >> "$NSS_WRAPPER_PASSWD"
 
-    # Create a group entry for the current GID if it doesn't exist
     cat /etc/group > "$NSS_WRAPPER_GROUP"
-    if ! grep -q ":${GROUP_ID}:" "$NSS_WRAPPER_GROUP"; then
+    if ! grep -q "^[^:]*:[^:]*:${GROUP_ID}:" "$NSS_WRAPPER_GROUP"; then
         echo "runner:x:${GROUP_ID}:" >> "$NSS_WRAPPER_GROUP"
     fi
 
     export LD_PRELOAD=libnss_wrapper.so
-
-    # Change to home directory
-    cd "$HOME"
 fi
 
 exec "$@"

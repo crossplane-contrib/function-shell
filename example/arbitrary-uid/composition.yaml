@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: example.crossplane.io/v1
-    kind: XR
+    kind: ArbitraryUID
   mode: Pipeline
   pipeline:
     - step: shell

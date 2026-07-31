@@ -1,6 +1,9 @@
 ---
 apiVersion: example.crossplane.io/v1
-kind: XR
+kind: ArbitraryUID
 metadata:
   name: example-arbitrary-uid
-spec: {}
+spec:
+  crossplane:
+    compositionRef:
+      name: arbitrary-uid-example

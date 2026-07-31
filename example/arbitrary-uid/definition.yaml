@@ -1,12 +1,12 @@
 apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xrs.example.crossplane.io
+  name: arbitraryuids.example.crossplane.io
 spec:
   group: example.crossplane.io
   names:
-    kind: XR
-    plural: xrs
+    kind: ArbitraryUID
+    plural: arbitraryuids
   scope: Cluster
   versions:
     - name: v1

@@ -114,8 +114,6 @@ spec:
           stdoutField:
             description: stdoutField
             type: string
-        required:
-        - metadata
         type: object
     served: true
     storage: true
