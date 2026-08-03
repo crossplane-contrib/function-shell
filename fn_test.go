@@ -19,6 +19,56 @@ import (
 
 const testTagHello = "hello"
 
+type logEntry struct {
+	msg           string
+	keysAndValues []any
+}
+
+type testLogger struct {
+	infoEntries       []logEntry
+	debugEntries      []logEntry
+	withValuesEntries [][]any
+}
+
+func (l *testLogger) Info(msg string, keysAndValues ...any) {
+	l.infoEntries = append(l.infoEntries, logEntry{msg: msg, keysAndValues: keysAndValues})
+}
+
+func (l *testLogger) Debug(msg string, keysAndValues ...any) {
+	l.debugEntries = append(l.debugEntries, logEntry{msg: msg, keysAndValues: keysAndValues})
+}
+
+func (l *testLogger) WithValues(keysAndValues ...any) logging.Logger {
+	l.withValuesEntries = append(l.withValuesEntries, keysAndValues)
+	return l
+}
+
+// assertLogContainsKVs checks that at least one log entry in entries has the specified message and contains all of the specified key-value pairs.
+func assertLogContainsKVs(t *testing.T, entries []logEntry, msg string, wantKVs map[string]any) {
+	t.Helper()
+	for _, entry := range entries {
+		if entry.msg != msg {
+			continue
+		}
+		got := make(map[any]any, len(entry.keysAndValues)/2)
+		for i := 0; i+1 < len(entry.keysAndValues); i += 2 {
+			got[entry.keysAndValues[i]] = entry.keysAndValues[i+1]
+		}
+		for k, want := range wantKVs {
+			v, ok := got[k]
+			if !ok {
+				t.Errorf("log %q: missing key %q (got keys: %v)", msg, k, entry.keysAndValues)
+				continue
+			}
+			if v != want {
+				t.Errorf("log %q key %q: want %q, got %q", msg, k, want, v)
+			}
+		}
+		return
+	}
+	t.Errorf("no log entry with msg %q found (entries: %v)", msg, entries)
+}
+
 func TestRunFunction(t *testing.T) {
 	type args struct {
 		ctx      context.Context
@@ -543,6 +593,118 @@ func TestRunFunction(t *testing.T) {
 
 			if diff := cmp.Diff(tc.want.err, err, cmpopts.EquateErrors()); diff != "" {
 				t.Errorf("%s\nf.RunFunction(...): -want err, +got err:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestRunFunctionLogs(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		req *fnv1.RunFunctionRequest
+	}
+	type wantLog struct {
+		level string // "info" or "debug"
+		msg   string
+		kvs   map[string]any
+	}
+	type want struct {
+		logs []wantLog
+	}
+
+	cases := map[string]struct {
+		reason string
+		args   args
+		want   want
+	}{
+		"LogsStdoutOnSuccess": {
+			reason: "Function output log should contain stdout key and empty stderr",
+			args: args{
+				ctx: context.Background(),
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": "echo foo",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				logs: []wantLog{
+					{
+						level: "debug",
+						msg:   "Executing shell command",
+						kvs: map[string]any{
+							"shellCommand": "echo foo",
+						},
+					},
+					{
+						level: "info",
+						msg:   "Function output",
+						kvs: map[string]any{
+							"tag":    testTagHello,
+							"stdout": "foo",
+							"stderr": "",
+						},
+					},
+				},
+			},
+		},
+		"LogsStderrOnError": {
+			reason: "Function output log should contain stderr when command fails",
+			args: args{
+				ctx: context.Background(),
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "shell.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellCommand": "echo 'error output' >&2; exit 1",
+						"stdoutField": "status.atFunction.shell.stdout",
+						"stderrField": "status.atFunction.shell.stderr"
+					}`),
+				},
+			},
+			want: want{
+				logs: []wantLog{
+					{
+						level: "debug",
+						msg:   "Executing shell command",
+						kvs: map[string]any{
+							"shellCommand": "echo 'error output' >&2; exit 1",
+						},
+					},
+					{
+						level: "info",
+						msg:   "Function output",
+						kvs: map[string]any{
+							"tag":    testTagHello,
+							"stdout": "",
+							"stderr": "error output",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			logger := &testLogger{}
+			f := &Function{log: logger}
+			_, _ = f.RunFunction(tc.args.ctx, tc.args.req)
+
+			for _, wantLog := range tc.want.logs {
+				switch wantLog.level {
+				case "info":
+					assertLogContainsKVs(t, logger.infoEntries, wantLog.msg, wantLog.kvs)
+				case "debug":
+					assertLogContainsKVs(t, logger.debugEntries, wantLog.msg, wantLog.kvs)
+				default:
+					t.Errorf("unknown log level %q", wantLog.level)
+				}
 			}
 		})
 	}
