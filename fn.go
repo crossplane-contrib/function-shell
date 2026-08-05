@@ -154,7 +154,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	sout := strings.TrimSpace(stdout.String())
 	serr := strings.TrimSpace(stderr.String())
 
-	log.Info("Function output", "tag", req.GetMeta().GetTag(), "stdout", sout, "stderr", serr)
+	// Log output at appropriate level: errors at Info for visibility, success at Debug
+	if cmderr != nil || serr != "" {
+		log.Info("Function output", "tag", req.GetMeta().GetTag(), "stdout", sout, "stderr", serr)
+	} else {
+		log.Debug("Function output", "tag", req.GetMeta().GetTag(), "stdout", sout, "stderr", serr)
+	}
 
 	err = dxr.Resource.SetValue(stdoutField, sout)
 	if err != nil {

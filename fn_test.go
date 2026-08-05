@@ -93,7 +93,7 @@ func TestRunFunctionLogs(t *testing.T) {
 		want   want
 	}{
 		"LogsStdoutOnSuccess": {
-			reason: "Function output log should contain stdout key and empty stderr",
+			reason: "Function output log should be at debug level on success with no stderr",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagFoo},
@@ -109,7 +109,7 @@ func TestRunFunctionLogs(t *testing.T) {
 				logs: []wantLog{
 					{level: "info", msg: "Running function", kvs: map[string]any{"tag": testTagFoo}},
 					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello"}},
-					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": testTagFoo}},
+					{level: "debug", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": testTagFoo}},
 				},
 			},
 		},
