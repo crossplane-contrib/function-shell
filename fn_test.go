@@ -17,7 +17,10 @@ import (
 	"github.com/crossplane/function-sdk-go/response"
 )
 
-const testTagHello = "hello"
+const (
+	testTagHello = "hello"
+	testTagFoo   = "foo"
+)
 
 type logEntry struct {
 	msg           string
@@ -33,9 +36,11 @@ type testLogger struct {
 func (l *testLogger) Info(msg string, keysAndValues ...any) {
 	l.infoEntries = append(l.infoEntries, logEntry{msg: msg, keysAndValues: keysAndValues})
 }
+
 func (l *testLogger) Debug(msg string, keysAndValues ...any) {
 	l.debugEntries = append(l.debugEntries, logEntry{msg: msg, keysAndValues: keysAndValues})
 }
+
 func (l *testLogger) WithValues(keysAndValues ...any) logging.Logger {
 	l.withValuesEntries = append(l.withValuesEntries, keysAndValues)
 	return l
@@ -91,7 +96,7 @@ func TestRunFunctionLogs(t *testing.T) {
 			reason: "Function output log should contain stdout key and empty stderr",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "foo"},
+					Meta: &fnv1.RequestMeta{Tag: testTagFoo},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -102,9 +107,9 @@ func TestRunFunctionLogs(t *testing.T) {
 			},
 			want: want{
 				logs: []wantLog{
-					{level: "info", msg: "Running function", kvs: map[string]any{"tag": "foo"}},
+					{level: "info", msg: "Running function", kvs: map[string]any{"tag": testTagFoo}},
 					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello"}},
-					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": "foo"}},
+					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": testTagFoo}},
 				},
 			},
 		},
@@ -112,7 +117,7 @@ func TestRunFunctionLogs(t *testing.T) {
 			reason: "Function output log should contain stderr key and empty stdout",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "foo"},
+					Meta: &fnv1.RequestMeta{Tag: testTagFoo},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
@@ -124,9 +129,9 @@ func TestRunFunctionLogs(t *testing.T) {
 			},
 			want: want{
 				logs: []wantLog{
-					{level: "info", msg: "Running function", kvs: map[string]any{"tag": "foo"}},
+					{level: "info", msg: "Running function", kvs: map[string]any{"tag": testTagFoo}},
 					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello> /dev/stderr; exit 1"}},
-					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "", "stderr": "hello", "tag": "foo"}},
+					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "", "stderr": "hello", "tag": testTagFoo}},
 				},
 			},
 		},
@@ -134,7 +139,7 @@ func TestRunFunctionLogs(t *testing.T) {
 			reason: "WithValues should be called with oxr-version, oxr-kind and oxr-name",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
-					Meta: &fnv1.RequestMeta{Tag: "foo"},
+					Meta: &fnv1.RequestMeta{Tag: testTagFoo},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1alpha1",
 						"kind": "Parameters",
