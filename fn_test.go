@@ -20,6 +20,7 @@ import (
 const (
 	testTagHello = "hello"
 	testTagFoo   = "foo"
+	testKeyTag   = "tag"
 )
 
 type logEntry struct {
@@ -107,10 +108,10 @@ func TestRunFunctionLogs(t *testing.T) {
 			},
 			want: want{
 				logs: []wantLog{
-					{level: "info", msg: "Running function", kvs: map[string]any{"tag": testTagFoo}},
+					{level: "info", msg: "Running function", kvs: map[string]any{testKeyTag: testTagFoo}},
 					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello"}},
 					{level: "debug", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": testTagFoo}},
-					{level: "info", msg: "Function completed successfully", kvs: map[string]any{"tag": testTagFoo}},
+					{level: "info", msg: "Function completed successfully", kvs: map[string]any{testKeyTag: testTagFoo}},
 				},
 			},
 		},
@@ -130,7 +131,7 @@ func TestRunFunctionLogs(t *testing.T) {
 			},
 			want: want{
 				logs: []wantLog{
-					{level: "info", msg: "Running function", kvs: map[string]any{"tag": testTagFoo}},
+					{level: "info", msg: "Running function", kvs: map[string]any{testKeyTag: testTagFoo}},
 					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello> /dev/stderr; exit 1"}},
 					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "", "stderr": "hello", "tag": testTagFoo}},
 				},
