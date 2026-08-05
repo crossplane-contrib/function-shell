@@ -110,6 +110,7 @@ func TestRunFunctionLogs(t *testing.T) {
 					{level: "info", msg: "Running function", kvs: map[string]any{"tag": testTagFoo}},
 					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello"}},
 					{level: "debug", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": testTagFoo}},
+					{level: "info", msg: "Function completed successfully", kvs: map[string]any{"tag": testTagFoo}},
 				},
 			},
 		},

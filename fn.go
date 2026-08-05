@@ -181,7 +181,9 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			msg := fmt.Sprintf("shellCmd %q for %q failed with %s", shellCmd, oxr.Resource.GetKind(), exiterr.Stderr)
 			response.Fatal(rsp, errors.Wrap(cmderr, msg))
 		}
+		return rsp, nil
 	}
 
+	log.Info("Function completed successfully", "tag", req.GetMeta().GetTag())
 	return rsp, nil
 }
