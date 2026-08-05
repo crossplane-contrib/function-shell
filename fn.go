@@ -113,9 +113,13 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			}
 			shellEnvVars[envVar.Key] = envValue
 		case v1alpha1.ShellEnvVarTypeFieldRef:
+			if envVar.FieldRef == nil {
+				response.Fatal(rsp, errors.Errorf("shellEnvVars: fieldRef must be set for key %s", envVar.Key))
+				return rsp, nil
+			}
 			envValue, err := fromFieldRef(req, *envVar.FieldRef)
 			if err != nil {
-				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of fieldRef %s", envVar.ValueRef))
+				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of fieldRef for key %s", envVar.Key))
 				return rsp, nil
 			}
 			shellEnvVars[envVar.Key] = envValue

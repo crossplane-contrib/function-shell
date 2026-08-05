@@ -333,7 +333,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd \"set -euo pìpefail\" for \"\" failed with : exit status 2",
+							Message:  "shellCmd.*pìpefail.*failed.*exit status.*",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
@@ -377,7 +377,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd unknown-shell-command for failed: exit status 127",
+							Message:  "shellCmd.*unknown-shell-command.*failed.*exit status 127",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
@@ -618,6 +618,33 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
+		"ResponseIsErrorWhenFieldRefTypeWithNilFieldRef": {
+			reason: "The Function should return an error when type is FieldRef but fieldRef is nil",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellEnvVars": [{"key": "TEST_ENV_VAR", "type": "FieldRef"}],
+						"shellCommand": "echo ${TEST_ENV_VAR}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{
+						{
+							Severity: fnv1.Severity_SEVERITY_FATAL,
+							Message:  "shellEnvVars: fieldRef must be set for key TEST_ENV_VAR",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
+						},
+					},
+				},
+			},
+		},
 		"ResponseWithCustomCacheTTL": {
 			reason: "The Function should set custom TTL when cacheTTL is specified",
 			args: args{
@@ -695,7 +722,10 @@ func TestRunFunction(t *testing.T) {
 			rsp, err := f.RunFunction(tc.args.ctx, tc.args.req)
 
 			var cmpOpts []cmp.Option
-			cmpOpts = append(cmpOpts, protocmp.Transform(), protocmp.IgnoreFields(&fnv1.Result{}, "message"))
+			cmpOpts = append(cmpOpts, protocmp.Transform())
+			if !tc.args.useRegex {
+				cmpOpts = append(cmpOpts, protocmp.IgnoreFields(&fnv1.Result{}, "message"))
+			}
 
 			if tc.args.useRegex {
 				cmpOpts = append(cmpOpts, cmp.Comparer(func(expected, actual string) bool {
