@@ -139,7 +139,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		exportCmds = exportCmds + "export " + k + "=\"" + v + "\";"
 	}
 
-	log.Debug(shellCmd)
+	log.Debug("Executing shell command", "cmd", shellCmd)
 
 	var stdout, stderr bytes.Buffer
 	cmd := shell.Commandf(exportCmds + shellCmd)

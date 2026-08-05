@@ -103,7 +103,7 @@ func TestRunFunctionLogs(t *testing.T) {
 			want: want{
 				logs: []wantLog{
 					{level: "info", msg: "Running function", kvs: map[string]any{"tag": "foo"}},
-					{level: "debug", msg: "echo hello"},
+					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello"}},
 					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": "foo"}},
 				},
 			},
@@ -125,7 +125,7 @@ func TestRunFunctionLogs(t *testing.T) {
 			want: want{
 				logs: []wantLog{
 					{level: "info", msg: "Running function", kvs: map[string]any{"tag": "foo"}},
-					{level: "debug", msg: "echo hello> /dev/stderr; exit 1"},
+					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello> /dev/stderr; exit 1"}},
 					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "", "stderr": "hello", "tag": "foo"}},
 				},
 			},
