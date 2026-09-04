@@ -21,6 +21,7 @@ returns the output to specified fields.
 - [Parameters](#parameters)
 - [Error Handling and Output Capture](#error-handling-and-output-capture)
 - [Caching Function Outputs](#caching-function-outputs)
+- [Security Considerations](#security-considerations)
 - [Running as Arbitrary User IDs](#running-as-arbitrary-user-ids)
 - [Examples](#examples)
 - [Development and Test](#development-and-test)
@@ -153,6 +154,38 @@ If the Composite Resource or any of the Managed Resources in the Composition are
 set a new cache duration for the output.
 
 See the echo [composition.yaml](example/echo/composition.yaml) for an example.
+
+## Security Considerations
+
+### Log Sensitivity
+
+When running with `--debug` enabled, function-shell logs shell commands and their output. This can expose sensitive data in logs if:
+
+- **Shell commands contain secrets**: Environment variables with sensitive values that are interpolated into commands will appear in debug logs
+- **Command output contains secrets**: stdout/stderr from commands may contain API responses, credentials, or other sensitive data
+
+**Recommendations:**
+
+1. **Avoid interpolating secrets directly in commands** - Use environment variables instead of embedding secrets in `shellCommand`
+2. **Review log retention policies** - Ensure Kubernetes log retention and access controls are appropriate for your security requirements
+3. **Use debug mode sparingly in production** - Only enable `--debug` when actively troubleshooting
+4. **Consider log aggregation security** - If forwarding logs to external systems, ensure they have appropriate access controls
+
+Example of safer secret handling:
+
+```yaml
+# Less safe: secret visible in debug logs
+shellCommand: 'curl -H "Authorization: Bearer my-secret-token" https://api.example.com'
+
+# Safer: secret passed via environment variable
+shellEnvVars:
+  - key: API_TOKEN
+    fieldRef:
+      path: spec.credentials.token
+shellCommand: 'curl -H "Authorization: Bearer ${API_TOKEN}" https://api.example.com'
+```
+
+Note: Even with environment variables, the command output (stdout/stderr) is logged at Info level for observability. Ensure your commands don't echo sensitive data unnecessarily.
 
 ## Running as Arbitrary User IDs
 

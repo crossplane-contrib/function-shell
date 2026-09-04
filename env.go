@@ -34,7 +34,7 @@ func fromFieldRef(req *fnv1.RunFunctionRequest, fieldRef v1alpha1.FieldRef) (str
 		return "", errors.New("path must be set")
 	}
 	// Check for context key presence and capture context key and path
-	contextRegex := regexp.MustCompile(`^context\[(.+?)].(.+)$`)
+	contextRegex := regexp.MustCompile(`^context\[(.+?)]\.(.+)$`)
 	if match := contextRegex.FindStringSubmatch(fieldRef.Path); match != nil {
 		if v, ok := request.GetContextKey(req, match[1]); ok {
 			context := &unstructured.Unstructured{}
