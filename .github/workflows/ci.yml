@@ -68,7 +68,8 @@ jobs:
       - name: Check Generated Code
         run: |
           go generate ./...
-          git diff --exit-code || (echo "Generated code is out of date. Run 'go generate ./...' and commit the changes." && exit 1)
+          test -z "$(git status --porcelain --untracked-files=all)" || \
+            (git status --short && echo "Generated code is out of date. Run 'go generate ./...' and commit the changes." && exit 1)
 
       - name: Run Unit Tests
         run: go test -v -cover ./...
@@ -96,7 +97,6 @@ jobs:
         with:
           buildkitd-flags: --debug
           version: ${{ env.DOCKER_BUILDX_VERSION }}
-          install: true
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

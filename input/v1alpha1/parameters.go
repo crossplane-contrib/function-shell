@@ -76,6 +76,7 @@ type ShellEnvVar struct {
 	// FieldRef is a reference to a field in the Composition.
 	FieldRef *FieldRef `json:"fieldRef,omitempty"`
 	// Type is the type of ShellEnVar: Value, ValueRef, FieldRef.
+	// +kubebuilder:validation:Enum=Value;ValueRef;FieldRef
 	Type ShellEnvVarType `json:"type,omitempty"`
 }
 
@@ -119,6 +120,7 @@ const FieldRefDefault = ""
 // FieldRef refers to a composite field like spec.region.
 type FieldRef struct {
 	// Path is the field path of the field being referenced, i.e. spec.myfield, status.output
+	// +kubebuilder:validation:MinLength=1
 	Path string `json:"path"`
 	// Policy when the field is not available. If set to "Required" will return
 	// an error if a field is missing. If set to "Optional" will return DefaultValue.
@@ -128,6 +130,6 @@ type FieldRef struct {
 	Policy FieldRefPolicy `json:"policy,omitempty"`
 	// DefaultValue when Policy is Optional and field is not available defaults to ""
 	// +optional
-	// +kbuebuilder:default:=""
+	// +kubebuilder:default:=""
 	DefaultValue string `json:"defaultValue,omitempty"`
 }

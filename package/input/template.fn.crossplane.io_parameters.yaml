@@ -61,12 +61,14 @@ spec:
                   description: FieldRef is a reference to a field in the Composition.
                   properties:
                     defaultValue:
+                      default: ""
                       description: DefaultValue when Policy is Optional and field
                         is not available defaults to ""
                       type: string
                     path:
                       description: Path is the field path of the field being referenced,
                         i.e. spec.myfield, status.output
+                      minLength: 1
                       type: string
                     policy:
                       default: Required
@@ -85,6 +87,10 @@ spec:
                   type: string
                 type:
                   description: 'Type is the type of ShellEnVar: Value, ValueRef, FieldRef.'
+                  enum:
+                  - Value
+                  - ValueRef
+                  - FieldRef
                   type: string
                 value:
                   description: Value is a fixed value, like http://api.example.com

@@ -20,6 +20,7 @@ import (
 const (
 	testTagHello = "hello"
 	testTagFoo   = "foo"
+	testKeyTag   = "tag"
 )
 
 type logEntry struct {
@@ -93,7 +94,7 @@ func TestRunFunctionLogs(t *testing.T) {
 		want   want
 	}{
 		"LogsStdoutOnSuccess": {
-			reason: "Function output log should contain stdout key and empty stderr",
+			reason: "Function output log should be at debug level on success with no stderr",
 			args: args{
 				req: &fnv1.RunFunctionRequest{
 					Meta: &fnv1.RequestMeta{Tag: testTagFoo},
@@ -107,9 +108,10 @@ func TestRunFunctionLogs(t *testing.T) {
 			},
 			want: want{
 				logs: []wantLog{
-					{level: "info", msg: "Running function", kvs: map[string]any{"tag": testTagFoo}},
+					{level: "info", msg: "Running function", kvs: map[string]any{testKeyTag: testTagFoo}},
 					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello"}},
-					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": testTagFoo}},
+					{level: "debug", msg: "Function output", kvs: map[string]any{"stdout": "hello", "stderr": "", "tag": testTagFoo}},
+					{level: "info", msg: "Function completed successfully", kvs: map[string]any{testKeyTag: testTagFoo}},
 				},
 			},
 		},
@@ -129,7 +131,7 @@ func TestRunFunctionLogs(t *testing.T) {
 			},
 			want: want{
 				logs: []wantLog{
-					{level: "info", msg: "Running function", kvs: map[string]any{"tag": testTagFoo}},
+					{level: "info", msg: "Running function", kvs: map[string]any{testKeyTag: testTagFoo}},
 					{level: "debug", msg: "Executing shell command", kvs: map[string]any{"cmd": "echo hello> /dev/stderr; exit 1"}},
 					{level: "info", msg: "Function output", kvs: map[string]any{"stdout": "", "stderr": "hello", "tag": testTagFoo}},
 				},
@@ -333,7 +335,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd \"set -euo pìpefail\" for \"\" failed with : exit status 2",
+							Message:  "shellCmd.*pìpefail.*failed.*exit status.*",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
@@ -377,7 +379,7 @@ func TestRunFunction(t *testing.T) {
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_FATAL,
-							Message:  "shellCmd unknown-shell-command for failed: exit status 127",
+							Message:  "shellCmd.*unknown-shell-command.*failed.*exit status 127",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
@@ -618,6 +620,33 @@ func TestRunFunction(t *testing.T) {
 				},
 			},
 		},
+		"ResponseIsErrorWhenFieldRefTypeWithNilFieldRef": {
+			reason: "The Function should return an error when type is FieldRef but fieldRef is nil",
+			args: args{
+				req: &fnv1.RunFunctionRequest{
+					Meta: &fnv1.RequestMeta{Tag: testTagHello},
+					Input: resource.MustStructJSON(`{
+						"apiVersion": "template.fn.crossplane.io/v1alpha1",
+						"kind": "Parameters",
+						"shellEnvVars": [{"key": "TEST_ENV_VAR", "type": "FieldRef"}],
+						"shellCommand": "echo ${TEST_ENV_VAR}",
+						"stdoutField": "spec.atFunction.shell.stdout"
+					}`),
+				},
+			},
+			want: want{
+				rsp: &fnv1.RunFunctionResponse{
+					Meta: &fnv1.ResponseMeta{Tag: testTagHello, Ttl: durationpb.New(response.DefaultTTL)},
+					Results: []*fnv1.Result{
+						{
+							Severity: fnv1.Severity_SEVERITY_FATAL,
+							Message:  "shellEnvVars: fieldRef must be set for key TEST_ENV_VAR",
+							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
+						},
+					},
+				},
+			},
+		},
 		"ResponseWithCustomCacheTTL": {
 			reason: "The Function should set custom TTL when cacheTTL is specified",
 			args: args{
@@ -695,7 +724,10 @@ func TestRunFunction(t *testing.T) {
 			rsp, err := f.RunFunction(tc.args.ctx, tc.args.req)
 
 			var cmpOpts []cmp.Option
-			cmpOpts = append(cmpOpts, protocmp.Transform(), protocmp.IgnoreFields(&fnv1.Result{}, "message"))
+			cmpOpts = append(cmpOpts, protocmp.Transform())
+			if !tc.args.useRegex {
+				cmpOpts = append(cmpOpts, protocmp.IgnoreFields(&fnv1.Result{}, "message"))
+			}
 
 			if tc.args.useRegex {
 				cmpOpts = append(cmpOpts, cmp.Comparer(func(expected, actual string) bool {

@@ -113,9 +113,13 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			}
 			shellEnvVars[envVar.Key] = envValue
 		case v1alpha1.ShellEnvVarTypeFieldRef:
+			if envVar.FieldRef == nil {
+				response.Fatal(rsp, errors.Errorf("shellEnvVars: fieldRef must be set for key %s", envVar.Key))
+				return rsp, nil
+			}
 			envValue, err := fromFieldRef(req, *envVar.FieldRef)
 			if err != nil {
-				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of fieldRef %s", envVar.ValueRef))
+				response.Fatal(rsp, errors.Wrapf(err, "cannot process contents of fieldRef for key %s", envVar.Key))
 				return rsp, nil
 			}
 			shellEnvVars[envVar.Key] = envValue
@@ -150,7 +154,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	sout := strings.TrimSpace(stdout.String())
 	serr := strings.TrimSpace(stderr.String())
 
-	log.Info("Function output", "tag", req.GetMeta().GetTag(), "stdout", sout, "stderr", serr)
+	// Log output at appropriate level: errors at Info for visibility, success at Debug
+	if cmderr != nil || serr != "" {
+		log.Info("Function output", "tag", req.GetMeta().GetTag(), "stdout", sout, "stderr", serr)
+	} else {
+		log.Debug("Function output", "tag", req.GetMeta().GetTag(), "stdout", sout, "stderr", serr)
+	}
 
 	err = dxr.Resource.SetValue(stdoutField, sout)
 	if err != nil {
@@ -172,7 +181,9 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			msg := fmt.Sprintf("shellCmd %q for %q failed with %s", shellCmd, oxr.Resource.GetKind(), exiterr.Stderr)
 			response.Fatal(rsp, errors.Wrap(cmderr, msg))
 		}
+		return rsp, nil
 	}
 
+	log.Info("Function completed successfully", "tag", req.GetMeta().GetTag())
 	return rsp, nil
 }
