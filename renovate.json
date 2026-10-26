@@ -24,6 +24,38 @@
       ],
       "pinDigests": true,
       "groupName": "GitHub Actions"
+    },
+    {
+      "matchDatasources": [
+        "golang-version"
+      ],
+      "groupName": "Go"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Go version used by CI",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/ci\\.yml$/"
+      ],
+      "matchStrings": [
+        "GO_VERSION: '(?<currentValue>[^']+)'"
+      ],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version"
+    },
+    {
+      "customType": "regex",
+      "description": "Default Go version for Docker builds",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG GO_VERSION=(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version"
     }
   ]
 }

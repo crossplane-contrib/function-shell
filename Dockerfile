@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
-# We use the latest Go 1.x version unless asked to use something else.
+# Pinned Go version, kept up to date by Renovate. Keep in sync with ci.yml.
 # The GitHub Actions CI job sets this argument for a consistent Go version.
-ARG GO_VERSION=1
+ARG GO_VERSION=1.26.10
 
 # Setup the base environment. The BUILDPLATFORM is set automatically by Docker.
 # The --platform=${BUILDPLATFORM} flag tells Docker to build the function using
