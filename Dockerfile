@@ -38,8 +38,18 @@ RUN --mount=target=. \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /function .
 
 # Produce the Function image.
-FROM python:3.14-bookworm AS image
-RUN apt-get update && apt-get install -y coreutils curl jq unzip zsh less libnss-wrapper
+# Using slim variant to reduce vulnerabilities (304 CVEs -> 50 CVEs) and image size.
+FROM python:3.14-slim-bookworm AS image
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    coreutils \
+    curl \
+    jq \
+    less \
+    libnss-wrapper \
+    unzip \
+    zsh \
+    && rm -rf /var/lib/apt/lists/*
 RUN groupadd -g 65532 nonroot
 RUN useradd -u 65532 -g 65532 -d /home/nonroot --create-home nonroot
 RUN mkdir /scripts /.aws && chmod 777 /.aws && chown 65532:65532 /scripts
