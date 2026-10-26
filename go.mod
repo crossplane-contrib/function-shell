@@ -1,6 +1,6 @@
 module github.com/crossplane-contrib/function-shell
 
-go 1.26.0
+go 1.26.10
 
 require (
 	github.com/alecthomas/kong v1.16.1
