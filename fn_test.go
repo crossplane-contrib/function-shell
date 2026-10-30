@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
@@ -714,6 +715,58 @@ func TestRunFunction(t *testing.T) {
 
 			if diff := cmp.Diff(tc.want.err, err, cmpopts.EquateErrors()); diff != "" {
 				t.Errorf("%s\nf.RunFunction(...): -want err, +got err:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestRunFunctionFailureMessage(t *testing.T) {
+	cases := map[string]struct {
+		reason       string
+		shellCommand string
+		wantMessage  string
+	}{
+		"IncludesStderr": {
+			reason:       "The fatal result should include the stderr the failed command wrote",
+			shellCommand: "echo 'success output'; echo 'error output' >&2; exit 1",
+			wantMessage:  "shellCmd \"echo 'success output'; echo 'error output' >&2; exit 1\" for \"\" failed with error output: exit status 1",
+		},
+		"NoStderr": {
+			reason:       "The fatal result should still report the exit status when the command wrote no stderr",
+			shellCommand: "exit 3",
+			wantMessage:  "shellCmd \"exit 3\" for \"\" failed with : exit status 3",
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			f := &Function{log: logging.NewNopLogger()}
+			req := &fnv1.RunFunctionRequest{
+				Meta: &fnv1.RequestMeta{Tag: testTagHello},
+			}
+			input, err := structpb.NewStruct(map[string]any{
+				"apiVersion":   "template.fn.crossplane.io/v1alpha1",
+				"kind":         "Parameters",
+				"shellCommand": tc.shellCommand,
+				"stdoutField":  "status.atFunction.shell.stdout",
+				"stderrField":  "status.atFunction.shell.stderr",
+			})
+			if err != nil {
+				t.Fatalf("structpb.NewStruct(...): %v", err)
+			}
+			req.Input = input
+
+			rsp, err := f.RunFunction(context.Background(), req)
+			if err != nil {
+				t.Fatalf("%s\nf.RunFunction(...): unexpected error: %v", tc.reason, err)
+			}
+
+			results := rsp.GetResults()
+			if len(results) != 1 {
+				t.Fatalf("%s\nf.RunFunction(...): want 1 result, got %d: %v", tc.reason, len(results), results)
+			}
+			if diff := cmp.Diff(tc.wantMessage, results[0].GetMessage()); diff != "" {
+				t.Errorf("%s\nf.RunFunction(...): -want message, +got message:\n%s", tc.reason, diff)
 			}
 		})
 	}
