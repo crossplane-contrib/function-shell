@@ -169,7 +169,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	if cmderr != nil {
 		exiterr := &exec.ExitError{}
 		if errors.As(cmderr, &exiterr) {
-			msg := fmt.Sprintf("shellCmd %q for %q failed with %s", shellCmd, oxr.Resource.GetKind(), exiterr.Stderr)
+			msg := fmt.Sprintf("shellCmd %q for %q failed with %s", shellCmd, oxr.Resource.GetKind(), serr)
 			response.Fatal(rsp, errors.Wrap(cmderr, msg))
 		}
 	}
